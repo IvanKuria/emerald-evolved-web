@@ -1,0 +1,16 @@
+{
+  "name": "poke-evolution-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "shots": "node scripts/shots.mjs",
+    "predev": "node scripts/copy-mgba.mjs",
+    "prebuild": "node scripts/copy-mgba.mjs",
+    "typecheck": "tsc"
+  }
+}

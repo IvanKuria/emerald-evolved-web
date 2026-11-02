@@ -1,0 +1,17 @@
+# Not deployed. `npx wrangler deploy` from this folder once the domain exists.
+name = "poke-evolution-presence"
+main = "worker.ts"
+compatibility_date = "2026-10-01"
+
+routes = [{ pattern = "realevolution.example/api/presence*", zone_name = "realevolution.example" }]
+
+[vars]
+ALLOWED_ORIGIN = "https://realevolution.example"
+
+[[durable_objects.bindings]]
+name = "PRESENCE"
+class_name = "PresenceObject"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["PresenceObject"]

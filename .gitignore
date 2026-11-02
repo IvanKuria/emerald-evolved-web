@@ -1,0 +1,8 @@
+node_modules
+dist
+*.local
+/shots
+/testrom/*.elf
+/testrom/*.bin
+.wrangler
+public/mgba
