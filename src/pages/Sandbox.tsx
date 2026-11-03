@@ -1,311 +1,322 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Sim, decodeParams, encodeParams, type SimEvent, type SimParams } from '../sim/engine'
-import { Field, type FieldHandle } from '../components/Field'
-import { FamilyTree } from '../components/FamilyTree'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router'
 import { DialogueBox } from '../components/DialogueBox'
-import { SplitReadout } from '../components/SplitReadout'
-import { DAYCARE_LINE, dayCare, type Score } from '../sim/daycare'
+import { GameMenu, type MenuItem } from '../components/GameMenu'
+import { HpBar } from '../components/HpBar'
 import { Rise } from '../components/Rise'
+import { DAYCARE_LINE, TIER_COLOUR } from '../sim/daycare'
+import { checkName, SPECIES_NAME_MAX } from '../registry/names'
+import { PcBox } from '../sandbox/PcBox'
+import { Yard } from '../sandbox/Yard'
+import { Reveal } from '../sandbox/Reveal'
+import { LAB, distance, egg, heightCm, hueOf, lineScore, rng, sizeOf, tallest, wild, type Lab, type Mon, type Rng, type Score } from '../sandbox/line'
 
 /* ------------------------------------------------------------------
-   Sandbox: the engine (sim/engine.ts) and the ROM hack's rules, with
-   the dials exposed.
+   The sandbox: make a new species, by hand, in about a minute.
 
-   Everything that decides the outcome is in the URL -- seed, settings
-   and how far it ran -- and the engine is deterministic, so a link
-   reproduces a run exactly, down to which Eevee hatched where. "Save
-   image" makes a card of the moment for sharing somewhere a link
-   doesn't preview well.
+   A toy, not a dashboard. One goal on arrival, said by the Day Care man
+   in the game's own message box. One obvious action, in the game's own
+   menu, with the PC's hand pointing at it. The rest is taught by doing:
+
+     COLLECT EGGS     ten eggs drop into a box and hatch
+     tap two          the tallest son and daughter; the hand keeps them,
+                      and they walk into the yard as the new parents
+     the meter        the Day Care's verdict on your line next to a wild
+                      Eevee, in its own four lines and HP colors
+     AUTO-BREED x10   earned after three generations by hand: it keeps
+                      the tallest for you
+     the split        the Day Care's last line, a reveal, a name, a card
+
+   It runs the hack's real rules (sandbox/line.ts): eight size genes,
+   new copies that make Pokémon bigger and, in the wrong company, make
+   eggs fail; the Day Care counting completed differences. It says it
+   is a simulation, and that the real thing is the game.
+
+   Settings stay in a drawer, at the game's values, worded for someone
+   who has never bred a Pokémon.
 ------------------------------------------------------------------ */
 
-const SPEEDS = [1, 2, 4, 8, 16, 32]
+const UNLOCK_AT = 3
+const AUTO_MS = 300
 
-function lineFor(e: SimEvent, sim: Sim): string | null {
-  switch (e.kind) {
-    case 'mutation':
-      return e.coat > 0 ? 'A mutation! An EEVEE hatched with a greener coat.' : 'A mutation! An EEVEE hatched with a darker coat.'
-    case 'refused':
-      return null
-    case 'split':
-      return `A new species split off: No.${sim.species.get(e.species)!.dex}.`
-    case 'extinct':
-      return `No.${sim.species.get(e.species)!.dex} died out.`
-  }
+const TIER_WORD: Record<Score, string> = { 70: 'Very well', 50: 'Get along', 20: 'Don’t like each other', 0: 'Won’t play together' }
+const FILL: Record<Score, number> = { 70: 1, 50: 0.48, 20: 0.17, 0: 0 }
+
+const SAY = {
+  // every line fits the game's box in two lines (measured against the font's width table)
+  goal: 'Breed a POKéMON that won’t play with the wild ones. Collect some eggs!',
+  pick: 'Tap the tallest son ♂ and the tallest daughter ♀. Tall ones carry the new genes.',
+  noDaughter: 'No daughters this time. Your old mother stays on.',
+  noSon: 'No sons this time. Your old father stays on.',
+  again: 'Good choice! Now collect their eggs.',
+  unlock: 'You’ve got the hang of it. Want me to keep the tallest for you?',
+  tier: (s: Score) => DAYCARE_LINE[s],
 }
 
-const START = 'One species of EEVEE. Press play and watch.'
+interface Challenge {
+  id: string
+  title: string
+  goal: string
+  done: (s: { mum: Mon; dad: Mon; gen: number; splitAt: number | null }) => boolean
+}
+const CHALLENGES: Challenge[] = [
+  { id: 'giant', title: 'A giant', goal: 'Breed a parent 0.55 m tall.', done: (s) => Math.max(heightCm(s.mum), heightCm(s.dad)) >= 55 },
+  { id: 'green', title: 'A green Eevee', goal: 'Keep the greenest until its coat turns green.', done: (s) => Math.max(hueOf(s.mum), hueOf(s.dad)) >= 5 * 48 },
+  { id: 'fast', title: 'Under 25 generations', goal: 'Make a new species by generation 25.', done: (s) => s.splitAt !== null && s.splitAt <= 25 },
+]
+
+function useWidth() {
+  const [w, setW] = useState(1200)
+  useEffect(() => {
+    const on = () => setW(document.documentElement.clientWidth)
+    on()
+    addEventListener('resize', on)
+    return () => removeEventListener('resize', on)
+  }, [])
+  return w
+}
 
 export function Sandbox() {
-  const initial = useRef(decodeParams(location.search))
-  const [params, setParams] = useState<SimParams>(initial.current.params)
-  const sim = useRef<Sim>(null as unknown as Sim)
-  if (!sim.current) {
-    sim.current = new Sim(initial.current.params)
-    for (let i = 0; i < initial.current.gen; i++) sim.current.step()
-  }
-  const [speed, setSpeed] = useState(3)
-  const [running, setRunning] = useState(true)
-  const control = useRef<FieldHandle>({ genMs: 1000 / SPEEDS[3], sprite: 0.13 })
-  const [tick, setTick] = useState(0)
-  const [line, setLine] = useState(START)
-  const [breaking, setBreaking] = useState(false)
-  const lastScore = useRef<Score>(70)
-  const [log, setLog] = useState<{ gen: number; text: string }[]>([])
-  const [copied, setCopied] = useState(false)
+  const width = useWidth()
+  const narrow = width < 640
+  const [lab, setLab] = useState<Lab>(LAB)
+  const [seed, setSeed] = useState(() => 1 + Math.floor(Math.random() * 1e6))
+  const r = useRef<Rng>(rng(seed))
+  const [mum, setMum] = useState<Mon>(() => wild(true, r.current))
+  const [dad, setDad] = useState<Mon>(() => wild(false, r.current))
+  const [gen, setGen] = useState(0)
+  const [litter, setLitter] = useState<Mon[]>([])
+  const [born, setBorn] = useState(0)
+  const [quick, setQuick] = useState(false)
+  const [kept, setKept] = useState<{ son?: number; daughter?: number }>({})
+  const [say, setSay] = useState(SAY.goal)
+  const [handMoves, setHandMoves] = useState(0)
+  const [auto, setAuto] = useState(false)
+  const [splitAt, setSplitAt] = useState<number | null>(null)
+  const [reveal, setReveal] = useState(false)
+  const [done, setDone] = useState<string[]>([])
+  const tierRef = useRef<Score>(70)
+  const stopAuto = useRef(false)
 
+  const score = lineScore(mum, dad)
+  const picking = litter.length > 0 && !auto && splitAt === null
+  const sons = litter.filter((m) => m.hatched && !m.female)
+  const daughters = litter.filter((m) => m.hatched && m.female)
+  const needSon = sons.length > 0 && kept.son === undefined
+  const needDaughter = daughters.length > 0 && kept.daughter === undefined
+  const ready = litter.length === 0 || (!needSon && !needDaughter)
+
+  const restart = useCallback(
+    (nextLab = lab) => {
+      const s = 1 + Math.floor(Math.random() * 1e6)
+      stopAuto.current = true
+      r.current = rng(s)
+      setSeed(s)
+      setLab(nextLab)
+      setMum(wild(true, r.current))
+      setDad(wild(false, r.current))
+      setGen(0)
+      setLitter([])
+      setKept({})
+      setHandMoves(0)
+      setAuto(false)
+      setSplitAt(null)
+      setReveal(false)
+      tierRef.current = 70
+      setSay(SAY.goal)
+    },
+    [lab],
+  )
+
+  // the verdict moves: the Day Care man says so, in his own line; at 0 the line has split
   useEffect(() => {
-    control.current.genMs = running ? 1000 / SPEEDS[speed] : 0
-  }, [running, speed])
-
-  // a phone's field holds the same population in a third of the room, so each Eevee is drawn a whole step smaller
-  useEffect(() => {
-    const fit = () => (control.current.sprite = innerWidth < 640 ? 0.09 : 0.13)
-    fit()
-    addEventListener('resize', fit)
-    return () => removeEventListener('resize', fit)
-  }, [])
-
-  const restart = useCallback((p: SimParams) => {
-    setParams(p)
-    sim.current = new Sim(p)
-    setLog([])
-    setLine(START)
-    lastScore.current = 70
-    control.current.pulse = 0
-    setBreaking(false)
-    setTick((t) => t + 1)
-  }, [])
-
-  // keep the address bar a faithful link to what is on screen
-  useEffect(() => {
-    const id = setInterval(() => {
-      history.replaceState(null, '', `/sandbox?${encodeParams(sim.current.p, sim.current.gen)}`)
-    }, 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  const lastRender = useRef(0)
-  const onStep = useCallback((ev: SimEvent[]) => {
-    const now = performance.now()
-    const s = sim.current
-    const one = s.livingSpecies().length === 1
-    for (const e of ev) {
-      const text = lineFor(e, s)
-      if (!text) continue
-      if (e.kind === 'split' && s.species.size === 2) {
-        control.current.pulse = now
-        setBreaking(true)
-        setLine(DAYCARE_LINE[0])
-        setTimeout(() => setBreaking(false), 1500)
-      } else if (e.kind !== 'mutation') setLine(text)
-      setLog((l) => [{ gen: e.gen, text }, ...l].slice(0, 40))
+    if (score === tierRef.current) return
+    tierRef.current = score
+    setSay(SAY.tier(score))
+    if (score === 0 && splitAt === null) {
+      setSplitAt(gen)
+      stopAuto.current = true
+      window.setTimeout(() => setReveal(true), 2600)
     }
-    if (one) {
-      const { score } = dayCare(s.crossDistance(), false)
-      if (score !== lastScore.current) {
-        const text = DAYCARE_LINE[score]
-        lastScore.current = score
-        setLine(text)
-        setLog((l) => [{ gen: s.gen, text: `Day Care: “${text.replace('\n', ' ')}”` }, ...l].slice(0, 40))
+  }, [score, gen, splitAt])
+
+  // challenges, checked as you go
+  useEffect(() => {
+    const met = CHALLENGES.filter((c) => !done.includes(c.id) && c.done({ mum, dad, gen, splitAt })).map((c) => c.id)
+    if (met.length) setDone((d) => [...d, ...met])
+  }, [mum, dad, gen, splitAt, done])
+
+  const collect = useCallback(() => {
+    const l = Array.from({ length: lab.eggs }, () => egg(mum, dad, r.current, lab))
+    setLitter(l)
+    setBorn(performance.now())
+    setQuick(false)
+    setKept({})
+    const ds = l.filter((m) => m.hatched && m.female).length
+    const ss = l.filter((m) => m.hatched && !m.female).length
+    setSay(handMoves === 0 ? SAY.pick : ds === 0 ? SAY.noDaughter : ss === 0 ? SAY.noSon : SAY.pick)
+  }, [mum, dad, lab, handMoves])
+
+  const pick = useCallback(
+    (m: Mon) => {
+      const next = { ...kept, [m.female ? 'daughter' : 'son']: m.id }
+      setKept(next)
+      // the one you keep walks straight into the yard as the new parent
+      if (m.female) setMum(m)
+      else setDad(m)
+      setGen(m.gen)
+      const stillSon = sons.length > 0 && next.son === undefined
+      const stillDaughter = daughters.length > 0 && next.daughter === undefined
+      if (!stillSon && !stillDaughter) {
+        const moves = handMoves + 1
+        setHandMoves(moves)
+        setSay(moves === UNLOCK_AT ? SAY.unlock : SAY.again)
       }
-    }
-    if (now - lastRender.current > 120 || ev.length) {
-      lastRender.current = now
-      setTick((t) => t + 1)
-    }
-  }, [])
+    },
+    [kept, sons.length, daughters.length, handMoves],
+  )
 
-  const set = (patch: Partial<SimParams>) => restart({ ...params, ...patch })
-  const s = sim.current
-  const living = s.livingSpecies().length
-  const firstNew = living > 1 ? [...s.species.values()].find((x) => x.parent !== null && x.died === null)?.dex : undefined
-
-  const share = async () => {
-    const url = `${location.origin}/sandbox?${encodeParams(s.p, s.gen)}`
-    try {
-      await navigator.clipboard.writeText(url)
-    } catch {
-      prompt('Copy this link', url)
+  const autoBreed = useCallback(async () => {
+    stopAuto.current = false
+    setAuto(true)
+    let m = mum
+    let d = dad
+    for (let i = 0; i < 10 && !stopAuto.current; i++) {
+      const l = Array.from({ length: lab.eggs }, () => egg(m, d, r.current, lab))
+      const nm = tallest(l, true, r.current)
+      const nd = tallest(l, false, r.current)
+      setLitter(l)
+      setQuick(true)
+      setKept({ daughter: nm?.id, son: nd?.id })
+      await new Promise((ok) => setTimeout(ok, AUTO_MS * 0.55))
+      m = nm ?? m
+      d = nd ?? d
+      setMum(m)
+      setDad(d)
+      setGen(Math.max(m.gen, d.gen))
+      await new Promise((ok) => setTimeout(ok, AUTO_MS * 0.45))
+      if (lineScore(m, d) === 0) break
     }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1800)
-  }
+    setAuto(false)
+  }, [mum, dad, lab])
+
+  const items: MenuItem[] = useMemo(() => {
+    if (splitAt !== null) return []
+    const out: MenuItem[] = []
+    if (ready) out.push({ label: 'COLLECT EGGS', onSelect: collect })
+    if (handMoves >= UNLOCK_AT && ready) out.unshift({ label: 'AUTO-BREED ×10', onSelect: autoBreed })
+    return out
+  }, [ready, collect, autoBreed, handMoves, splitAt])
+
+  const pointAtMenu = items.length > 0 && !auto && (gen === 0 || handMoves === UNLOCK_AT)
 
   return (
-    <div className="mx-auto max-w-[1360px] px-5 pt-8 sm:px-8 sm:pt-14">
-      {/* Captions, as on Home: the explanation of the rules is on How it works. */}
-      <Rise className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <h1 className="display text-hero">Run your own valley.</h1>
-        <p className="text-body text-ash md:pb-2">Every link replays the exact run.</p>
+    <div className="sbx">
+      <Rise className="sbx__head">
+        <h1 className="display text-hero">Make a new species.</h1>
+        <p className="sbx__honest">
+          A simulation of the game’s breeding rules. The real thing is the game. <Link to="/play">Play it</Link>
+        </p>
       </Rise>
 
-      <Rise delay={100} className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="relative overflow-hidden rounded-card bg-paper-lift shadow-card">
-          <Field
-            id="sandbox-field"
-            sim={sim}
-            control={control}
-            onStep={onStep}
-            className="block aspect-square w-full sm:aspect-[16/9]"
-            label={`Population of ${params.pop} Eevee at generation ${s.gen}, ${living} species.`}
-          />
-          <div className="pointer-events-none absolute inset-x-0 top-0 hidden justify-between sm:flex px-5 pt-4 text-meta font-semibold text-ash sm:px-7">
-            <span>{params.habitats ? 'Favors small, green' : 'Same habitat'}</span>
-            <span>{params.habitats ? 'Favors big, dark' : 'Same habitat'}</span>
-          </div>
-          <div className="flex items-end justify-between gap-4 px-5 pt-1 pb-5 sm:px-7">
-            <p className="display text-[2.4rem] leading-none text-ink tc">Gen {s.gen}</p>
-            <SplitReadout distance={s.crossDistance()} species={living} breaking={breaking} size="lg" newDex={firstNew} />
+      <Rise delay={80} className="sbx__stage">
+        <div className="sbx__left">
+          <Yard mum={mum} dad={dad} scale={narrow ? 2 : 3} />
+          <p className="sbx__gen display tc">Generation {gen}</p>
+          <div className="sbx__verdict" aria-live="polite">
+            <p className="sbx__label">Your line, next to a wild Eevee</p>
+            <p className="display sbx__tier" data-tier={score}>
+              {TIER_WORD[score]}
+            </p>
+            <HpBar value={FILL[score]} colour={TIER_COLOUR[score]} hpLabel={false} scale={narrow ? 3 : 4} label="How well your line gets along with a wild Eevee" />
+            <ol className="sbx__pips" aria-hidden="true">
+              {([70, 50, 20, 0] as Score[]).map((s) => (
+                <li key={s} data-on={score <= s} />
+              ))}
+            </ol>
           </div>
         </div>
 
-        {/* The controls sit in the game's own window frame (text_window/1.png, nine-sliced). */}
-        <aside className="game-window flex flex-col gap-6 p-3">
-          <div className="flex gap-2">
-            <button className="btn btn-ink btn-sm flex-1" onClick={() => setRunning((r) => !r)}>
-              {running ? 'Pause' : 'Play'}
-            </button>
-            <button className="btn btn-quiet btn-sm" onClick={() => { const ev = s.step(); onStep(ev) }} disabled={running}>
-              Step
-            </button>
-            <button className="btn btn-quiet btn-sm" onClick={() => restart(params)}>
-              Restart
-            </button>
-          </div>
-
-          <Slider label="Speed" value={speed} min={0} max={SPEEDS.length - 1} step={1} show={`${SPEEDS[speed]} gen/s`} onChange={setSpeed} />
-          <Slider label="Population" value={params.pop} min={30} max={240} step={10} show={String(params.pop)} onChange={(v) => set({ pop: v })} />
-          <Slider label="Mutation rate" value={params.mutation} min={0} max={1} step={0.05} show={`${Math.round(params.mutation * 100)}%`} onChange={(v) => set({ mutation: v })} />
-          <Slider label="Selection" value={params.selection} min={0} max={1} step={0.05} show={params.selection < 0.15 ? 'Off' : `${Math.round(params.selection * 100)}%`} onChange={(v) => set({ selection: v })} />
-
-          <div className="flex flex-col gap-3">
-            <Toggle label="A river down the middle" on={params.river} onChange={(v) => set({ river: v })} />
-            <Toggle label="Each side favors different Eevee" on={params.habitats} onChange={(v) => set({ habitats: v })} />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-meta font-semibold text-ink-soft">Seed</span>
-            <span className="text-meta text-ash tc">{params.seed}</span>
-            <button className="ml-auto text-meta font-semibold text-ink-soft hover:text-ink" onClick={() => set({ seed: 1 + Math.floor(Math.random() * 99999) })}>
-              New valley
-            </button>
-          </div>
-
-          <div className="mt-auto flex gap-2">
-            <button className="btn btn-quiet btn-sm flex-1" onClick={share}>
-              {copied ? 'Link copied' : 'Copy link'}
-            </button>
-            <button className="btn btn-quiet btn-sm flex-1" onClick={() => saveCard(s)}>
-              Save image
-            </button>
-          </div>
-        </aside>
-      </Rise>
-
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex flex-col gap-6">
-          <DialogueBox text={line} width={240} />
-          <div className="game-window p-2 sm:p-4">
-            <h2 className="text-body font-bold text-ink">Family tree</h2>
-            <div className="mt-3">
-              <FamilyTree sim={s} tick={tick} />
+        <div className="sbx__right">
+          <div className="sbx__talk">
+            <DialogueBox key={say} text={say} width={240} className="w-full" />
+            <div className="sbx__menu">
+              {items.length > 0 && <GameMenu label="What to do" items={items} scale={narrow ? 2 : 3} />}
+              {pointAtMenu && <span className="breed__hand px sbx__point" data-frame={-1} aria-hidden="true" />}
             </div>
           </div>
+
+          {litter.length > 0 && (
+            <PcBox
+              litter={litter}
+              born={born}
+              quick={quick}
+              kept={[kept.son, kept.daughter].filter((x): x is number => x !== undefined)}
+              picking={picking}
+              onPick={pick}
+              cols={narrow ? 3 : 5}
+            />
+          )}
         </div>
-        <div className="game-window self-start p-2">
-          <h2 className="text-body font-bold text-ink">What happened</h2>
-          {log.length === 0 && <p className="mt-2 text-meta text-ash">Mutations, the Day Care’s verdicts and splits show up here as they happen.</p>}
-          <ol className="mt-3 flex max-h-[360px] flex-col gap-2 overflow-auto text-meta text-ash">
-            {log.map((l, i) => (
-              <li key={i} className="flex gap-3">
-                <span className="w-10 shrink-0 font-semibold text-ink-soft tc">{l.gen}</span>
-                <span className={l.text.startsWith('A new species') ? 'font-semibold text-sprout-ink' : ''}>
-                  {l.text.replace('EEVEE', 'Eevee').replace('A mutation! An', 'Mutation: an').replace('POKéMON', 'Pokémon')}
-                </span>
+
+        {reveal && splitAt !== null && (
+          <Reveal mum={mum} gen={splitAt} onAgain={() => restart()} name={(n) => checkName(n, SPECIES_NAME_MAX, 'a name')} card={(name) => ({
+            species: 133,
+            name,
+            trainer: 'YOU',
+            generation: splitAt,
+            coat: 0,
+            hue: hueOf(mum),
+            shiny: false,
+            size: sizeOf(mum),
+            d: distance(mum),
+          })} />
+        )}
+      </Rise>
+
+      {(splitAt !== null || done.length > 0) && (
+        <Rise className="sbx__challenges">
+          <h2 className="display text-title">Try these next</h2>
+          <ul>
+            {CHALLENGES.map((c) => (
+              <li key={c.id} className="game-window sbx__challenge" data-done={done.includes(c.id)}>
+                <p className="display text-[1.9rem] leading-none text-ink">{c.title}</p>
+                <p className="mt-2 text-body text-ink-soft">{c.goal}</p>
+                <p className="mt-3 text-meta font-semibold">{done.includes(c.id) ? <span className="text-sprout-ink">Done</span> : <button className="text-ink-soft hover:text-ink" onClick={() => restart()}>Start a new line</button>}</p>
               </li>
             ))}
-          </ol>
+          </ul>
+        </Rise>
+      )}
+
+      <details className="sbx__lab game-window">
+        <summary>Lab settings</summary>
+        <p className="mt-3 text-meta text-ash">These start at the game’s own values. Changing them starts a new line.</p>
+        <Setting label="How often a size gene changes in an egg" value={Math.round(1 / lab.mutation)} min={16} max={256} step={16} show={`1 in ${Math.round(1 / lab.mutation)}`} onChange={(v) => restart({ ...lab, mutation: 1 / v })} />
+        <Setting label="Eggs each generation" value={lab.eggs} min={4} max={10} step={1} show={String(lab.eggs)} onChange={(v) => restart({ ...lab, eggs: v })} />
+        <Setting label="How many babies are daughters" value={Math.round(1 / lab.female)} min={2} max={8} step={1} show={`1 in ${Math.round(1 / lab.female)}`} onChange={(v) => restart({ ...lab, female: v === 8 ? 31 / 256 : 1 / v })} />
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button className="btn btn-quiet btn-sm" onClick={() => restart(LAB)}>Back to the game’s values</button>
+          <button className="btn btn-quiet btn-sm" onClick={() => restart()}>New wild pair</button>
         </div>
-      </div>
+        <p className="mt-4 text-meta text-ash">
+          Line {seed}. The rules are the game’s: eight size genes, each new copy makes a Pokémon bigger, and the Day Care counts how many your line has
+          changed for good. <Link className="font-semibold text-sprout-ink" to="/how-it-works">How it works</Link>
+        </p>
+      </details>
     </div>
   )
 }
 
-function Slider(p: { label: string; value: number; min: number; max: number; step: number; show: string; onChange: (v: number) => void }) {
+function Setting(p: { label: string; value: number; min: number; max: number; step: number; show: string; onChange: (v: number) => void }) {
   const fill = ((p.value - p.min) / (p.max - p.min)) * 100
   return (
-    <label className="flex flex-col gap-1">
+    <label className="mt-4 flex flex-col gap-1">
       <span className="flex justify-between text-meta font-semibold text-ink-soft">
         {p.label}
         <span className="text-ash tc">{p.show}</span>
       </span>
-      <input
-        type="range"
-        className="range"
-        min={p.min}
-        max={p.max}
-        step={p.step}
-        value={p.value}
-        style={{ '--fill': `${fill}%` } as React.CSSProperties}
-        onChange={(e) => p.onChange(Number(e.target.value))}
-      />
+      <input type="range" className="range" min={p.min} max={p.max} step={p.step} value={p.value} style={{ ['--fill' as string]: `${fill}%` }} onChange={(e) => p.onChange(Number(e.target.value))} />
     </label>
   )
-}
-
-function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button role="switch" aria-checked={on} onClick={() => onChange(!on)} className="flex items-center justify-between gap-4 text-left text-meta font-semibold text-ink-soft">
-      {label}
-      <span className="relative h-6 w-10 shrink-0 rounded-pill transition-colors duration-200" style={{ background: on ? 'var(--ink)' : 'var(--paper-deep)' }}>
-        <span
-          className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-paper-lift shadow-lift transition-transform duration-300 ease-[var(--ease-spring)]"
-          style={{ transform: on ? 'translateX(16px)' : 'none' }}
-        />
-      </span>
-    </button>
-  )
-}
-
-/* A 1200x630 card: the page, the population as it is right now, and the
-   generation and species count set like a thumbnail. */
-async function saveCard(sim: Sim) {
-  await document.fonts.load('400 120px "Bebas Neue"')
-  const c = document.createElement('canvas')
-  c.width = 1200
-  c.height = 630
-  const ctx = c.getContext('2d')!
-  ctx.fillStyle = '#f4f2ee'
-  ctx.fillRect(0, 0, 1200, 630)
-  const field = document.getElementById('sandbox-field') as HTMLCanvasElement | null
-  if (field) {
-    const k = Math.min(1160 / field.width, 470 / field.height)
-    const w = field.width * k
-    const h = field.height * k
-    ctx.drawImage(field, (1200 - w) / 2, 130, w, h)
-  }
-  const grain = new Image()
-  grain.src = '/game/grain.png'
-  await grain.decode().catch(() => {})
-  ctx.globalAlpha = 0.08
-  ctx.globalCompositeOperation = 'multiply'
-  ctx.fillStyle = ctx.createPattern(grain, 'repeat') ?? '#000'
-  ctx.fillRect(0, 0, 1200, 630)
-  ctx.globalAlpha = 1
-  ctx.globalCompositeOperation = 'source-over'
-  ctx.fillStyle = '#151515'
-  ctx.textAlign = 'center'
-  ctx.font = '400 104px "Bebas Neue"'
-  const n = sim.livingSpecies().length
-  ctx.fillText(`Generation ${sim.gen}: ${n} species`.toUpperCase(), 600, 112)
-  ctx.font = '400 30px "Bebas Neue"'
-  ctx.fillStyle = '#6c675e'
-  ctx.fillText('EMERALD EVOLVED SANDBOX', 600, 600)
-  c.toBlob((b) => {
-    if (!b) return
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(b)
-    a.download = `emerald-evolved-gen-${sim.gen}.png`
-    a.click()
-  })
 }

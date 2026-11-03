@@ -72,8 +72,9 @@ const hueDist = (a: number, b: number) => {
   return d > 768 ? 1536 - d : d
 }
 
-/** DominantHueCluster: a 16-bit mask of the entries the hue gene rotates. */
-function dominantHueCluster(pal: Rgb5[]): number {
+/** DominantHueCluster: a 16-bit mask of the entries the hue gene rotates. `weights` is the icon
+ *  path's pixel count per entry (SetMonIconGenePalette); front sprites weight every entry 1. */
+function dominantHueCluster(pal: Rgb5[], weights?: number[]): number {
   const hues: number[] = []
   const w: number[] = []
   for (let i = 1; i < 16; i++) {
@@ -82,7 +83,7 @@ function dominantHueCluster(pal: Rgb5[]): number {
     w[i] = 0
     if (k !== 2 || c < CLUSTER_MIN_CHROMA) continue
     hues[i] = hue(r, g, b)
-    w[i] = 1
+    w[i] = weights ? weights[i] : 1
   }
   let best = -1, bestScore = 0
   for (let i = 1; i < 16; i++) {
@@ -115,9 +116,9 @@ function dominantHueCluster(pal: Rgb5[]): number {
 }
 
 /** Apply coat (0 normal, 1 albino, 2 red, 3 black) and a hue shift (1536 = 360 degrees) to a 16-colour palette. */
-export function applyGenes(palette: Rgb5[], coat: number, shift: number): Rgb5[] {
+export function applyGenes(palette: Rgb5[], coat: number, shift: number, weights?: number[]): Rgb5[] {
   const pal = palette.map((c) => c.slice() as Rgb5)
-  const hueMask = shift !== 0 && coat !== 1 ? dominantHueCluster(palette) : 0
+  const hueMask = shift !== 0 && coat !== 1 ? dominantHueCluster(palette, weights) : 0
   const ys: number[] = []
   for (let i = 1; i < 16; i++) {
     const [k, y] = classify(ex5(pal[i][0]), ex5(pal[i][1]), ex5(pal[i][2]))

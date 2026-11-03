@@ -200,7 +200,7 @@ export function Split() {
           loop={false}
           showCursor={false}
           className="split__box"
-          renderText={(typed) => <DialogueBox text={DAYCARE_LINE[tier]} chars={[...typed].length} width={wide < 600 ? 200 : 240} />}
+          renderText={(typed) => <DialogueBox text={DAYCARE_LINE[tier]} chars={[...typed].length} width={240} />}
         />
         <div className="split__read">
           <HpBar value={FILL[tier]} colour={TIER_COLOUR[tier]} hpLabel={false} scale={wide < 600 ? 2 : 3} label="How well one Eevee from each side would get along" />

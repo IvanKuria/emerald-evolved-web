@@ -52,6 +52,18 @@ frames = [[px[f * 32 + x, y] for y in range(32) for x in range(32)] for f in ran
     'shiny': five(jasc(EXP / 'eevee' / 'overworld_shiny.pal')),
 }, separators=(',', ':')))
 
+# ---- party/PC icon (graphics/pokemon/eevee/icon.png, two 32x32 frames), indices + its own palette
+ic = Image.open(EXP / 'eevee' / 'icon.png')
+assert ic.mode == 'P' and ic.size == (32, 64), (ic.mode, ic.size)
+ip = ic.load()
+pal = ic.getpalette()[:48]
+(OUT / 'eevee_icon.json').write_text(json.dumps({
+    'source': 'pokeemerald-expansion 1.17.2 graphics/pokemon/eevee/icon.png (embedded icon palette)',
+    'w': 32, 'h': 32,
+    'frames': [[ip[x, f * 32 + y] for y in range(32) for x in range(32)] for f in range(2)],
+    'palette': [[pal[i * 3 + k] >> 3 for k in range(3)] for i in range(16)],
+}, separators=(',', ':')))
+
 # ---- the ocean: one 16x16 metatile per animation frame, stacked (16 x 128)
 gen = DECOMP / 'data' / 'tilesets' / 'primary' / 'general'
 pal = [tuple(c) for c in jasc(gen / 'palettes' / '04.pal')]

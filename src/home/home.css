@@ -232,7 +232,7 @@
   align-items: center;
   justify-content: center;
   gap: 22px;
-  padding: 80px 16px 24px;
+  padding: 80px 12px 24px;
   overflow: hidden;
 }
 
@@ -443,4 +443,218 @@
   right: -46px;
   bottom: 30px;
   margin-left: 0;
+}
+
+/* ---- the sandbox (pages/Sandbox.tsx) ---- */
+
+.sbx {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 16px 0;
+}
+.sbx__head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+.sbx__honest {
+  font-size: var(--t-meta);
+  color: var(--ash);
+}
+.sbx__honest a {
+  color: var(--sprout-ink);
+  font-weight: 650;
+}
+
+.sbx__stage {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  align-items: start;
+  gap: 28px 40px;
+}
+.sbx__left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sbx__right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+.yard {
+  filter: drop-shadow(5px 8px 6px rgba(40, 30, 20, 0.2));
+}
+.sbx__gen {
+  margin-top: 6px;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ash);
+}
+.sbx__verdict {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.sbx__label {
+  font-size: var(--t-meta);
+  font-weight: 650;
+  color: var(--ash);
+}
+.sbx__tier {
+  font-size: var(--t-title);
+  line-height: 0.9;
+  color: var(--ink);
+  transition: color 400ms var(--ease-out);
+}
+.sbx__tier[data-tier='0'] {
+  color: var(--sprout-ink);
+}
+.sbx__pips {
+  display: flex;
+  gap: 6px;
+}
+.sbx__pips li {
+  width: 26px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--paper-deep);
+  transition: background-color 400ms var(--ease-out);
+}
+.sbx__pips li[data-on='true'] {
+  background: var(--ink);
+}
+
+.sbx__talk {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.sbx__menu {
+  position: relative;
+  min-height: 40px;
+}
+.sbx__point {
+  --hand: 64px;
+  width: 64px;
+  height: 64px;
+  background-size: 64px 256px;
+  left: auto;
+  margin-left: 0;
+  right: -54px;
+  top: -18px;
+}
+
+.pcbox {
+  max-width: 100%;
+}
+.pcbox__slot {
+  position: absolute;
+  cursor: url('/game/cursor_point.png') 18 46, pointer;
+  border-radius: 4px;
+}
+.pcbox__slot:disabled {
+  cursor: default;
+}
+
+.reveal {
+  grid-column: 1 / -1;
+  --white: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 0 10px;
+}
+/* the hatch's fade to white, over the whole screen, at the game's coefficient */
+.reveal__flash {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #fff;
+  opacity: var(--white);
+  pointer-events: none;
+}
+.reveal__mon {
+  filter: drop-shadow(6px 9px 7px rgba(40, 30, 20, 0.24));
+}
+.reveal__title {
+  font-size: var(--t-hero);
+  line-height: 0.9;
+  color: var(--ink);
+  margin-top: 4px;
+}
+.reveal__name {
+  margin-top: 22px;
+  padding: 6px 8px;
+  text-align: left;
+}
+.reveal__input {
+  width: 220px;
+  padding: 10px 12px;
+  border-radius: var(--r-field);
+  background: var(--paper-lift);
+  box-shadow: inset 0 0 0 1px rgba(21, 21, 21, 0.14);
+  font-size: var(--t-lead);
+  font-weight: 650;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+.reveal__card {
+  margin-top: 10px;
+  max-width: 460px;
+}
+
+.sbx__challenges {
+  margin-top: 90px;
+  text-align: center;
+}
+.sbx__challenges ul {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  text-align: left;
+}
+.sbx__challenge[data-done='true'] {
+  opacity: 0.75;
+}
+
+.sbx__lab {
+  margin: 80px auto 0;
+  max-width: 560px;
+  padding: 4px 10px 10px;
+}
+.sbx__lab summary {
+  cursor: pointer;
+  font-weight: 650;
+  color: var(--ink-soft);
+  font-size: var(--t-body);
+}
+
+@media (max-width: 640px) {
+  .sbx {
+    padding: 24px 12px 0;
+  }
+  .sbx__stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .sbx__point {
+    --hand: 48px;
+    width: 48px;
+    height: 48px;
+    background-size: 48px 192px;
+    right: -40px;
+    top: -12px;
+  }
 }

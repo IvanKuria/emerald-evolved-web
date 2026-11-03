@@ -62,9 +62,12 @@ export async function messageBoxCanvas(text: string, W = 240): Promise<HTMLCanva
   return c
 }
 
-/** CSS scale and native width for a container `cw` CSS pixels wide. */
-function layoutFor(cw: number, maxWidth: number) {
-  for (const s of [4, 3]) if (cw >= maxWidth * s) return { s, w: maxWidth }
+/** CSS scale and native width for a container `cw` CSS pixels wide. On a 2x phone, 1.5 CSS pixels
+ *  per game pixel is 3 whole device pixels, which lets the full 240-wide box (two lines, as the game
+ *  pages it) fit a 390 px screen; it is only used where it lands on whole device pixels. */
+function layoutFor(cw: number, maxWidth: number, dpr: number) {
+  for (const s of [4, 3, 2]) if (cw >= maxWidth * s) return { s, w: maxWidth }
+  if (cw >= maxWidth * 1.5 && Number.isInteger(1.5 * dpr)) return { s: 1.5, w: maxWidth }
   return { s: 2, w: Math.max(150, Math.min(maxWidth, Math.floor(cw / 2))) }
 }
 
@@ -99,7 +102,7 @@ export function DialogueBox({
     const el = wrapRef.current
     if (!el) return
     const ro = new ResizeObserver(([e]) => {
-      const next = layoutFor(e.contentRect.width, width)
+      const next = layoutFor(e.contentRect.width, width, devicePixelRatio || 1)
       setLay((l) => (l.s === next.s && l.w === next.w ? l : next))
     })
     ro.observe(el)

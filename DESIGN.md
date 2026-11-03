@@ -32,7 +32,7 @@ and the registry's gallery; with `DEV_STORE=memory` they show only what you put 
 | `/play` | Turn "I have a ROM" into "I'm playing" | Four visible steps (Your ROM, Checked, Patched, Playing), a drop zone where the game's window does the talking, the emulator, saves, touch controls. |
 | `/species` | The share loop: what players have made, and the way in for yours | The first species ever made in its own spot, "Register yours" (reads a save in the tab, finds lines that have split off, name one, card), the newest cards. |
 | `/species/:id` | The link people post | One card, Save image, Copy link, a way to Play. |
-| `/sandbox` | Let people watch it happen and share what they got | The engine with its dials exposed, a growing family tree, an event log. Every run is a link. |
+| `/sandbox` | Make a new species by hand in about a minute, then go do it in the game | A guided toy (section 2b): the Day Care man's goal, COLLECT EGGS, keep the tallest pair, AUTO-BREED once earned, the split, a name and a preview card, then challenges. Settings in a drawer. |
 | `/how-it-works` | The science and the code, for the curious and for people who will ask "is it real?" | Long-form, one measure, real code from pokeemerald next to the new rule. Credits. |
 | `/download` | For desktop emulators and flash carts | The .bps, GitHub, checksums, how to patch by hand. |
 
@@ -75,6 +75,31 @@ for entrances, GSAP ScrollTrigger for the two pinned sections.
 Game UI is used as UI wherever it fits: the PC hand is the mouse cursor over things you can grab
 (open, then a fist) and press (pointing), the menu is the game's menu, the verdict is the game's
 message box. `scripts/record-home.mjs` records each section at desktop and phone for review.
+
+### 2b. Sandbox (v3, Nov 2026)
+
+Rebuilt after the owner rejected the slider dashboard ("a page out of a book", "I have no idea how I
+would even start"). It is now taught by doing, in the game's own UI:
+
+- **One goal on arrival**, in the message box: "Breed a POKéMON that won't play with the wild ones.
+  Collect some eggs!" Every line is measured against the font's width table to fit two lines.
+- **One action**, a game menu (standard window frame, ▶) with the PC hand pointing at it.
+- **The litter is a PC box** (`sandbox/PcBox.tsx`): party icons recolored the hack's way (pixel-weighted
+  hue cluster, 22.5-degree buckets), bobbing on sAnim_1, the summary's HEIGHT under each in the game
+  font with ♂/♀ in the summary's colors. Eggs drop in, wobble and hatch with a white blend; failed
+  eggs stay eggs. The hand points, opens, closes; kept slots go HP-bar green.
+- **The yard** (`sandbox/Yard.tsx`): the two parents as front sprites at their real size; a new
+  parent plays Eevee's front animation.
+- **The meter** is the Day Care's verdict on the line next to a wild Eevee, in its four lines, with the
+  HP bar in its colors.
+- **AUTO-BREED ×10** unlocks after three generations by hand and keeps the tallest pair.
+- **The payoff** (`sandbox/Reveal.tsx`): the last Day Care line, a full-screen fade to white at the
+  hatch's coefficients, the new species doing its front animation, NAME IT, and the registry card as
+  a preview, with "Do it for real" to /play. Then three challenge cards.
+- **The model** (`sandbox/line.ts`) is the ROM's rules for the size and color genes: 8 size loci,
+  mutation 1/64, wild A 1/20, the 2^-n hatch rule, d = completed B loci, 1-in-8 daughters, hue
+  mutation 1/24. `tests/sandbox.test.ts` checks it against the ROM's measurement (median generations
+  to a new species, keeping the tallest of 10 eggs: 31 in the ROM; 22-40 required here).
 
 Nothing on the site is numbered except the Play steps, which really are a sequence.
 
@@ -367,7 +392,7 @@ physical phone.
 | Thing | Status |
 |---|---|
 | Home hero simulation, mutation and selection demos, speciation card | Working |
-| Sandbox: controls, deterministic share links, family tree, event log, Save image (1200x630 PNG) | Working |
+| Sandbox: the guided toy (collect, keep, auto-breed, split, name, preview card, challenges, lab drawer) | Working; recorded first minute in research/pokemon-evolution/web-shots/v3-sandbox |
 | ROM SHA-1 check and refusal messages | Working, tested |
 | BPS patcher | Working, tested against Flips both ways |
 | mGBA boot, keyboard, touch controls, pause, mute, full screen | Working (test cartridge; touch checked in WebKit/iPhone and Chromium/Android profiles) |
