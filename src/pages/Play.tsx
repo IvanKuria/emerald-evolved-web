@@ -107,7 +107,7 @@ export function Play() {
       setPlaying(true)
       canvas.current?.focus({ preventScroll: true })
       // on a phone the screen and the touch controls only fit together once the page is scrolled to them
-      if (innerWidth < 1024) requestAnimationFrame(() => stage.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+      if (innerWidth < 1024) requestAnimationFrame(() => stage.current?.scrollIntoView({ block: 'start' }))
     } catch (err) {
       setPhase({
         at: 'failed',
@@ -188,7 +188,12 @@ export function Play() {
         the page has loaded you could turn your Wi-Fi off and it would still work.
       </p>
 
-      <ol className="mt-10 flex flex-wrap gap-x-8 gap-y-3" aria-label="Progress">
+      {/* Once the game is running the four steps are all done; on a phone they would only push the
+          screen and its controls apart, so they step aside there. */}
+      <ol
+        className={`mt-10 flex flex-wrap gap-x-8 gap-y-3 ${phase.at === 'playing' || phase.at === 'booting' ? 'max-lg:hidden' : ''}`}
+        aria-label="Progress"
+      >
         {STEPS.map((s, i) => {
           const done = i < step
           const now = i === step || (i === 3 && step === 4)

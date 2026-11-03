@@ -150,8 +150,8 @@ export function Sandbox() {
             label={`Population of ${params.pop} Eevee at generation ${s.gen}, ${living} species.`}
           />
           <div className="pointer-events-none absolute inset-x-0 top-0 hidden justify-between sm:flex px-5 pt-4 text-meta font-semibold text-ash sm:px-7">
-            <span>{params.habitats ? 'Favours small, green' : 'Same habitat'}</span>
-            <span>{params.habitats ? 'Favours big, dark' : 'Same habitat'}</span>
+            <span>{params.habitats ? 'Favors small, green' : 'Same habitat'}</span>
+            <span>{params.habitats ? 'Favors big, dark' : 'Same habitat'}</span>
           </div>
           <div className="flex items-end justify-between gap-4 px-5 pt-1 pb-5 sm:px-7">
             <p className="display text-[2.4rem] leading-none text-ink tc">Gen {s.gen}</p>
@@ -179,7 +179,7 @@ export function Sandbox() {
 
           <div className="flex flex-col gap-3">
             <Toggle label="A river down the middle" on={params.river} onChange={(v) => set({ river: v })} />
-            <Toggle label="Each side favours different Eevee" on={params.habitats} onChange={(v) => set({ habitats: v })} />
+            <Toggle label="Each side favors different Eevee" on={params.habitats} onChange={(v) => set({ habitats: v })} />
           </div>
 
           <div className="flex items-center gap-2">

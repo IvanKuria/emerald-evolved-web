@@ -62,7 +62,7 @@ export function How() {
             picking instead of you.
           </p>
           <p>
-            In the <Link to="/sandbox">sandbox</Link> the habitat does it: each side of the map favours a different coat
+            In the <Link to="/sandbox">sandbox</Link> the habitat does it: each side of the map favors a different coat
             and size, and the ones closer to their side’s ideal have more babies.
           </p>
 

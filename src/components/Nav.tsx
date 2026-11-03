@@ -29,7 +29,7 @@ export function Nav() {
     <header
       className="sticky top-0 z-50 transition-shadow duration-300"
       style={{
-        background: 'color-mix(in srgb, var(--paper) 86%, transparent)',
+        background: 'var(--paper)',
         backdropFilter: 'saturate(1.2) blur(14px)',
         WebkitBackdropFilter: 'saturate(1.2) blur(14px)',
         boxShadow: scrolled ? '0 10px 30px -22px rgba(40,30,20,.45)' : 'none',
