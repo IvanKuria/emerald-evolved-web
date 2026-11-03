@@ -25,7 +25,7 @@ export function describe(card: Pick<Card, 'coat' | 'hue' | 'shiny'>) {
   if (card.coat === COAT.albino) bits.push('albino')
   if (card.coat === COAT.red) bits.push('red coat')
   if (card.coat === COAT.black) bits.push('black coat')
-  if (card.hue) bits.push(`colour turned ${Math.round((Math.abs(card.hue) * 360) / 1536)}°`)
+  if (card.hue) bits.push(`color turned ${Math.round((Math.abs(card.hue) * 360) / 1536)}°`)
   if (card.shiny) bits.push('shiny')
   return bits
 }

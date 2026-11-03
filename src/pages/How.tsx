@@ -24,13 +24,13 @@ export function How() {
             ships.
           </p>
           <p>
-            The genes that show are coat colour, the colour of the ruff, and body size. A few more are invisible. They do
+            The genes that show are coat color, the color of the ruff, and body size. A few more are invisible. They do
             nothing to the Pokémon, they just change slowly over time, and that turns out to matter a lot later.
           </p>
           <p>
-            The colours are real palette swaps. A GBA sprite is a picture made of numbers that point into a list of
-            sixteen colours, and a coat gene rotates the hue of the four colours that paint the body. Every colour gets
-            snapped back to the 15-bit colours the GBA can actually show, so nothing on screen is a colour the cartridge
+            The colors are real palette swaps. A GBA sprite is a picture made of numbers that point into a list of
+            sixteen colors, and a coat gene rotates the hue of the four colors that paint the body. Every color gets
+            snapped back to the 15-bit colors the GBA can actually show, so nothing on screen is a color the cartridge
             couldn’t make.
           </p>
 

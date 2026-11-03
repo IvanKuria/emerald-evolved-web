@@ -120,7 +120,7 @@ export function Home() {
             control={control}
             onStep={onStep}
             className="block h-[min(56vh,480px)] w-full sm:h-[clamp(300px,48vh,540px)]"
-            label="A population of Eevee on two sides of a river, slowly changing colour and size each generation until they split into two species."
+            label="A population of Eevee on two sides of a river, slowly changing color and size each generation until they split into two species."
           />
           <div className="pointer-events-none mx-auto flex max-w-[var(--page)] items-end justify-between gap-6 px-5 sm:px-8">
             <span className="text-meta font-semibold text-ash tc">Generation {gen}</span>
@@ -204,7 +204,7 @@ function Rules() {
       >
         <p>
           Each Pokémon carries two copies of every gene, one from each parent. When an egg is made, each copy has a small
-          chance of changing. Usually you can’t see it. Sometimes the baby comes out a different colour.
+          chance of changing. Usually you can’t see it. Sometimes the baby comes out a different color.
         </p>
       </Rule>
       <Rule n={2} title="You decide who has babies" demo={<SelectionDemo />}>
