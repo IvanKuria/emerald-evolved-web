@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { applyBps, BpsError } from '../lib/bps'
 import { sha1Hex } from '../lib/sha1'
-import { EMERALD, TEST_CART, judge, type PatchTarget } from '../lib/rom'
+import { EMERALD, TEST_CART, judge, patchAvailable, type PatchTarget } from '../lib/rom'
 import { bootCore, download, forgetGame, hasGame, isolationProblem, storeGame, type Emulator } from '../lib/emulator'
 import { setPlaying } from '../lib/presence'
-import { SITE } from '../lib/site'
 import { DialogueBox } from '../components/DialogueBox'
 import { HpBar } from '../components/HpBar'
 import { TouchPad } from '../components/TouchPad'
+import { useNavigate } from 'react-router'
+import { handSave } from '../registry/client'
+import { cssPx, deviceScale, fitScale, useDpr } from '../lib/pixels'
 
 /* ------------------------------------------------------------------
    Play.
@@ -73,6 +75,19 @@ export function Play() {
   const input = useRef<HTMLInputElement>(null)
   const stage = useRef<HTMLDivElement>(null)
   const problem = typeof window !== 'undefined' ? isolationProblem() : null
+  const screenBox = useRef<HTMLDivElement>(null)
+  const dpr = useDpr()
+  const [screenK, setScreenK] = useState(() => deviceScale(3, dpr))
+
+  /* The GBA screen at a whole number of screen pixels per game pixel:
+     the biggest that fits, up to 4x. A 3.4x screen would smear every tile. */
+  useEffect(() => {
+    const el = screenBox.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setScreenK(fitScale(e.contentRect.width, 240, dpr, deviceScale(4, dpr))))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [dpr])
 
   useEffect(() => () => setPlaying(false), [])
 
@@ -90,7 +105,9 @@ export function Play() {
       setEmu(e)
       setPhase({ at: 'playing' })
       setPlaying(true)
-      canvas.current?.focus()
+      canvas.current?.focus({ preventScroll: true })
+      // on a phone the screen and the touch controls only fit together once the page is scrolled to them
+      if (innerWidth < 1024) requestAnimationFrame(() => stage.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
     } catch (err) {
       setPhase({
         at: 'failed',
@@ -113,16 +130,30 @@ export function Play() {
       setPhase({ at: 'checking', progress: 1 })
       const v = judge(rom, sha, t)
       if (!v.ok) return setPhase({ at: 'refused', title: v.title, detail: v.detail })
-      if (t === EMERALD && !SITE.patchReady) return setPhase({ at: 'verified-waiting' })
+      if (!(await patchAvailable(t))) return setPhase({ at: 'verified-waiting' })
 
       setPhase({ at: 'patching', progress: 0 })
       try {
+        // the patch is about 24 MB: the first half of the bar is the download, the second the patching
         const res = await fetch(t.patchUrl)
-        if (!res.ok) throw new BpsError('The patch file couldn’t be downloaded. Check your connection and try again.', 'patch')
-        const patch = new Uint8Array(await res.arrayBuffer())
-        // let the bar paint between chunks of work
+        if (!res.ok || !res.body) throw new BpsError('The patch file couldn’t be downloaded. Check your connection and try again.', 'patch')
+        const total = Number(res.headers.get('content-length')) || t.patchSize || 0
+        const parts: Uint8Array[] = []
+        let got = 0
+        const reader = res.body.getReader()
+        for (;;) {
+          const { done, value } = await reader.read()
+          if (done) break
+          parts.push(value)
+          got += value.length
+          if (total) setPhase({ at: 'patching', progress: Math.min(1, got / total) * 0.5 })
+        }
+        const bytes = new Uint8Array(got)
+        let at = 0
+        for (const p of parts) (bytes.set(p, at), (at += p.length))
+        // let the bar paint before the patching, which runs in one go
         await new Promise((r) => setTimeout(r, 60))
-        const out = applyBps(rom, patch, (f) => setPhase({ at: 'patching', progress: f }))
+        const out = applyBps(rom, bytes, (f) => setPhase({ at: 'patching', progress: 0.5 + f * 0.5 }))
         if (t.targetSha1 && (await sha1Hex(out)) !== t.targetSha1)
           throw new BpsError('The patched game isn’t the one we expected. Nothing was saved.', 'output')
         setPhase({ at: 'patching', progress: 1 })
@@ -199,14 +230,15 @@ export function Play() {
           }}
         >
           <div className={phase.at === 'playing' || phase.at === 'booting' ? 'block' : 'hidden'}>
-            <div className="flex justify-center p-3 sm:p-8">
+            <div ref={screenBox} className="flex justify-center p-3 sm:p-8">
               <canvas
                 ref={canvas}
                 id="canvas"
                 tabIndex={0}
                 width={240}
                 height={160}
-                className="px aspect-[3/2] w-full max-w-[960px] rounded-[6px] bg-ink shadow-card"
+                className="px block rounded-[4px] bg-ink shadow-card"
+                style={{ width: cssPx(240, screenK, dpr), height: cssPx(160, screenK, dpr) }}
                 aria-label="Game screen. Keyboard: arrows to move, X is A, Z is B, Enter is Start."
                 onContextMenu={(e) => e.preventDefault()}
               />
@@ -347,6 +379,7 @@ function Toolbar({
   stage: React.RefObject<HTMLDivElement | null>
   onForget: () => void
 }) {
+  const navigate = useNavigate()
   const [paused, setPaused] = useState(false)
   const [muted, setMuted] = useState(false)
   const saveIn = useRef<HTMLInputElement>(null)
@@ -354,7 +387,7 @@ function Toolbar({
   return (
     <>
       <div>
-        <h2 className="text-body font-bold text-ink">Playing {target === TEST_CART ? 'the test cartridge' : 'Real Evolution'}</h2>
+        <h2 className="text-body font-bold text-ink">Playing {target === TEST_CART ? 'the test cartridge' : 'Emerald Evolved'}</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           <button className="btn btn-quiet btn-sm" onClick={() => { paused ? emu.resumeGame() : emu.pauseGame(); setPaused(!paused) }}>
             {paused ? 'Resume' : 'Pause'}
@@ -397,6 +430,20 @@ function Toolbar({
         {patched && (
           <button className="text-meta font-semibold text-ink-soft hover:text-ink" onClick={() => download(patched, target.outName)}>
             Download the patched game for another emulator
+          </button>
+        )}
+        {target !== TEST_CART && (
+          <button
+            className="text-meta font-semibold text-sprout-ink hover:text-ink"
+            onClick={() => {
+              const s = emu.getSave()
+              if (s) {
+                handSave(s)
+                navigate('/species#register')
+              }
+            }}
+          >
+            Look for new species in this save
           </button>
         )}
         <button className="text-meta font-semibold text-refuse-ink hover:text-ink" onClick={onForget}>

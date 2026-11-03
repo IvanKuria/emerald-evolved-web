@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Link } from 'react-router'
 import { LivePlayers } from './LivePlayers'
+import { Logo } from './Logo'
 
 /* No rule under the bar. It sits on the page, and only once the page
    has scrolled under it does it get a shadow, so there is never a line
@@ -8,6 +9,7 @@ import { LivePlayers } from './LivePlayers'
 
 const LINKS = [
   { to: '/play', label: 'Play' },
+  { to: '/species', label: 'Species' },
   { to: '/sandbox', label: 'Sandbox' },
   { to: '/how-it-works', label: 'How it works' },
   { to: '/download', label: 'Download' },
@@ -34,9 +36,8 @@ export function Nav() {
       }}
     >
       <nav className="mx-auto flex h-[68px] max-w-[var(--page)] items-center gap-6 px-5 sm:px-8">
-        <Link to="/" className="group flex items-center gap-2.5 text-ink" onClick={() => setOpen(false)}>
-          <img src="/game/ball.png" width={16} height={16} alt="" className="px h-7 w-7 transition-transform duration-500 ease-[var(--ease-spring)] group-hover:rotate-[-20deg]" />
-          <span className="display text-[1.7rem] leading-none tracking-[0.01em] whitespace-nowrap">Real Evolution</span>
+        <Link to="/" className="group text-ink" aria-label="Emerald Evolved, home" onClick={() => setOpen(false)}>
+          <Logo />
         </Link>
 
         <div className="ml-auto hidden items-center gap-1 md:flex">

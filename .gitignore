@@ -6,3 +6,6 @@ dist
 /testrom/*.bin
 .wrangler
 public/mgba
+dev-start.cmd
+dev.log
+public/patch/*.bps

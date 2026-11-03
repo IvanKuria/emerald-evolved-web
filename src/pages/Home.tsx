@@ -7,6 +7,8 @@ import { LivePlayers } from '../components/LivePlayers'
 import { MutationDemo } from '../components/MutationDemo'
 import { SelectionDemo } from '../components/SelectionDemo'
 import { Creature } from '../components/Creature'
+import { SplitReadout } from '../components/SplitReadout'
+import { DAYCARE_LINE, dayCare, type Score } from '../sim/daycare'
 import { SITE } from '../lib/site'
 import { useInView } from '../lib/useInView'
 
@@ -15,9 +17,10 @@ import { useInView } from '../lib/useInView'
 
    The hero is the thing itself: one population of Eevee, running the
    real rules (sim/engine.ts) with a river down the middle. In about
-   half a minute the two banks stop looking alike, then stop being able
-   to breed, and the game's own message box says so. No caption explains
-   it first. The headline is the video's title, set like a thumbnail.
+   half a minute the two banks stop looking alike, the Day Care's
+   verdict on one from each side walks down its three lines, and then
+   they can't breed at all and the count turns to two. The headline is
+   the product's name, set like a thumbnail.
 
    This is the one piece of motion on the page that nobody asked for,
    so it is the only one. Everything below it moves when touched.
@@ -32,19 +35,7 @@ const WARM = 14
 const GEN_MS = 760
 
 const OPENING = 'Two groups of EEVEE live on either side of a river.'
-
-function lineFor(e: SimEvent): string | null {
-  switch (e.kind) {
-    case 'mutation':
-      return e.coat > 0 ? 'A mutation! An EEVEE hatched with a greener coat.' : 'A mutation! An EEVEE hatched with a darker coat.'
-    case 'refused':
-      return 'The two prefer to play with other POKéMON than each other.'
-    case 'split':
-      return 'The EEVEE across the river are a new species now.'
-    default:
-      return null
-  }
-}
+const NEW_SPECIES = 'The EEVEE across the river are a new species now.'
 
 function makeHero() {
   const s = new Sim(HERO)
@@ -58,26 +49,60 @@ export function Home() {
   const control = useRef<FieldHandle>({ genMs: GEN_MS, sprite: 0.24 })
   const [line, setLine] = useState(OPENING)
   const [gen, setGen] = useState(sim.current.gen)
+  const [dist, setDist] = useState(() => sim.current.crossDistance())
   const [species, setSpecies] = useState(1)
+  const [breaking, setBreaking] = useState(false)
+  const [newDex, setNewDex] = useState<number | undefined>()
+  const lastScore = useRef<Score>(dayCare(sim.current.crossDistance(), false).score)
+  const timers = useRef<number[]>([])
 
   useEffect(() => {
-    const narrow = () => (control.current.sprite = innerWidth < 640 ? 0.135 : 0.24)
+    const narrow = () => (control.current.sprite = innerWidth < 640 ? 0.07 : 0.19)
     narrow()
     addEventListener('resize', narrow)
-    return () => removeEventListener('resize', narrow)
+    return () => {
+      removeEventListener('resize', narrow)
+      timers.current.forEach(clearTimeout)
+    }
   }, [])
 
   const onStep = useCallback((ev: SimEvent[]) => {
     const s = sim.current
+    const d = s.crossDistance()
+    const n = s.livingSpecies().length
     setGen(s.gen)
-    setSpecies(s.livingSpecies().length)
+    setDist(d)
     for (const e of ev) {
-      const l = e.kind === 'split' && s.species.size > 2 ? 'Another new species of EEVEE split off!' : lineFor(e)
-      if (l) setLine(l)
+      if (e.kind === 'mutation' && n === 1)
+        setLine(e.coat > 0 ? 'A mutation! An EEVEE hatched with a greener coat.' : 'A mutation! An EEVEE hatched with a darker coat.')
+      if (e.kind === 'split' && s.species.size === 2) {
+        // the moment: the bar empties, the Day Care refuses, the field hops, then the count lands
+        control.current.pulse = performance.now()
+        setBreaking(true)
+        setNewDex(s.species.get(e.species)?.dex)
+        setLine(DAYCARE_LINE[0])
+        timers.current.push(
+          window.setTimeout(() => setBreaking(false), 1500),
+          window.setTimeout(() => setLine(NEW_SPECIES), 4200),
+        )
+      }
+    }
+    setSpecies(n)
+    if (n === 1) {
+      const { score } = dayCare(d, false)
+      if (score !== lastScore.current) {
+        lastScore.current = score
+        setLine(DAYCARE_LINE[score])
+      }
     }
     // after a long rest on two species, start a new valley
     if (s.gen > 220) {
       sim.current = makeHero()
+      control.current.pulse = 0
+      lastScore.current = dayCare(sim.current.crossDistance(), false).score
+      setSpecies(1)
+      setNewDex(undefined)
+      setDist(sim.current.crossDistance())
       setLine(OPENING)
     }
   }, [])
@@ -85,34 +110,35 @@ export function Home() {
   return (
     <>
       <section className="relative pt-6 sm:pt-10" aria-labelledby="hero-title">
-        <h1 id="hero-title" className="display mx-auto max-w-[14ch] px-5 text-center text-banner" style={{ animation: 'rise 900ms 120ms var(--ease-out) both' }}>
-          I gave Pokémon real evolution
+        <h1 id="hero-title" className="display mx-auto max-w-[9ch] px-5 text-center text-banner md:max-w-none" style={{ animation: 'rise 900ms 120ms var(--ease-out) both' }}>
+          Emerald Evolved
         </h1>
 
-        <div className="relative mx-auto mt-2 max-w-[1500px]">
+        <div className="relative mx-auto mt-4 max-w-[1500px]">
           <Field
             sim={sim}
             control={control}
             onStep={onStep}
-            className="block h-[clamp(320px,50vh,560px)] w-full"
+            className="block h-[min(56vh,480px)] w-full sm:h-[clamp(300px,48vh,540px)]"
             label="A population of Eevee on two sides of a river, slowly changing colour and size each generation until they split into two species."
           />
-          <div className="pointer-events-none absolute inset-x-0 bottom-1 mx-auto flex max-w-[var(--page)] justify-between px-5 text-meta font-semibold text-ash tc sm:px-8">
-            <span>Generation {gen}</span>
-            <span className={species > 1 ? 'text-sprout-ink' : ''}>
-              {species} {species === 1 ? 'species' : 'species'}
-            </span>
+          <div className="pointer-events-none mx-auto flex max-w-[var(--page)] items-end justify-between gap-6 px-5 sm:px-8">
+            <span className="text-meta font-semibold text-ash tc">Generation {gen}</span>
+            <SplitReadout distance={dist} species={species} breaking={breaking} newDex={newDex} />
           </div>
         </div>
 
-        <div className="mx-auto mt-5 max-w-[760px] px-4">
+        <div className="mx-auto mt-6 max-w-[760px] px-4">
           <DialogueBox text={line} width={240} />
         </div>
 
-        <div className="mt-9 flex flex-col items-center gap-4 px-5">
+        <div className="mt-9 flex flex-col items-center gap-6 px-5">
+          <p className="max-w-[40ch] text-center text-quiet leading-[1.45] text-ink-soft">
+            Pokémon Emerald with real evolution. Breed a line far enough and it becomes a species nobody has seen.
+          </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link to="/play" className="btn btn-ink">
-              Play now
+              Play in your browser
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M6 3.5L10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -204,12 +230,10 @@ function SpeciationDemo() {
     <div ref={ref} className="rounded-card bg-paper-lift px-5 pt-8 pb-6 shadow-card sm:px-8">
       <div className="flex items-end justify-center gap-6 sm:gap-14">
         <Creature coat={0.5} mane={0.1} scale={2} label="A small green Eevee from the left bank" />
-        <div style={{ transform: 'scaleX(-1)' }}>
-          <Creature coat={-0.55} mane={-0.2} scale={3} label="A large violet Eevee from the right bank" />
-        </div>
+        <Creature coat={-0.55} mane={-0.2} scale={3} flip label="A large dark Eevee from the right bank" />
       </div>
       <div className="mt-6">
-        {seen && <DialogueBox text="The two prefer to play with other POKéMON than each other." width={240} />}
+        <DialogueBox key={seen ? 'seen' : 'idle'} text={DAYCARE_LINE[0]} typing={seen} />
       </div>
       <p className="mt-4 text-center text-meta text-ash">That line is in the original game. Now it’s how you find out you made a new species.</p>
     </div>

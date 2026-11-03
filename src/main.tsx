@@ -8,6 +8,7 @@ import { Play } from './pages/Play'
 import { Sandbox } from './pages/Sandbox'
 import { How } from './pages/How'
 import { Download } from './pages/Download'
+import { Registry, SpeciesPage } from './pages/Registry'
 import './styles.css'
 
 function Layout() {
@@ -38,6 +39,8 @@ const router = createBrowserRouter([
       { path: '/sandbox', element: <Sandbox /> },
       { path: '/how-it-works', element: <How /> },
       { path: '/download', element: <Download /> },
+      { path: '/species', element: <Registry /> },
+      { path: '/species/:id', element: <SpeciesPage /> },
     ],
   },
 ])

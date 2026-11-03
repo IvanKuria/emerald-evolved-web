@@ -14,12 +14,37 @@ import type { Emulator } from '../lib/emulator'
 
 const DIRS = ['Right', 'Down', 'Left', 'Up'] as const
 
+/* The game reads the buttons once a frame. A quick tap can go down and
+   up inside one frame and never be seen, so every press is held for at
+   least five frames (80 ms) before it is let go. */
+const MIN_HOLD = 80
+const pressedAt = new Map<string, number>()
+function press(emu: Emulator, name: string) {
+  pressedAt.set(name, performance.now())
+  emu.buttonPress(name)
+}
+function release(emu: Emulator, name: string) {
+  const left = MIN_HOLD - (performance.now() - (pressedAt.get(name) ?? 0))
+  if (left > 0) setTimeout(() => emu.buttonUnpress(name), left)
+  else emu.buttonUnpress(name)
+}
+/* Capture keeps a sliding thumb on the control it started on. Some
+   browsers refuse capture for a pointer they consider gone; the press
+   still counts. */
+function capture(e: React.PointerEvent<HTMLElement>) {
+  try {
+    e.currentTarget.setPointerCapture(e.pointerId)
+  } catch {
+    /* no capture, still pressed */
+  }
+}
+
 function Dpad({ emu }: { emu: Emulator }) {
   const held = useRef(new Set<string>())
   const set = (next: Set<string>) => {
-    for (const d of held.current) if (!next.has(d)) emu.buttonUnpress(d)
+    for (const d of held.current) if (!next.has(d)) release(emu, d)
     for (const d of next) if (!held.current.has(d)) {
-      emu.buttonPress(d)
+      press(emu, d)
       navigator.vibrate?.(6)
     }
     held.current = next
@@ -42,7 +67,7 @@ function Dpad({ emu }: { emu: Emulator }) {
     <div
       className="relative h-36 w-36 touch-none select-none"
       onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId)
+        capture(e)
         read(e)
       }}
       onPointerMove={(e) => e.buttons && read(e)}
@@ -62,12 +87,12 @@ function Key({ emu, name, className, children }: { emu: Emulator; name: string; 
     <button
       className={`grid touch-none place-items-center select-none ${className}`}
       onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId)
-        emu.buttonPress(name)
+        capture(e)
+        press(emu, name)
         navigator.vibrate?.(6)
       }}
-      onPointerUp={() => emu.buttonUnpress(name)}
-      onPointerCancel={() => emu.buttonUnpress(name)}
+      onPointerUp={() => release(emu, name)}
+      onPointerCancel={() => release(emu, name)}
       onContextMenu={(e) => e.preventDefault()}
       aria-label={name}
     >

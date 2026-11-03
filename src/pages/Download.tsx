@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
-import { EMERALD } from '../lib/rom'
+import { useEffect, useState } from 'react'
+import { EMERALD, patchAvailable } from '../lib/rom'
 import { SITE } from '../lib/site'
 
 /* Download. For people who would rather play in a desktop emulator or
@@ -7,6 +8,8 @@ import { SITE } from '../lib/site'
    prove you have the right files. */
 
 export function Download() {
+  const [ready, setReady] = useState<boolean | null>(null)
+  useEffect(() => void patchAvailable().then(setReady), [])
   return (
     <div className="mx-auto max-w-[var(--page)] px-5 pt-10 sm:px-8 sm:pt-16">
       <h1 className="display text-hero">Download</h1>
@@ -18,18 +21,18 @@ export function Download() {
       <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div className="flex flex-col justify-between gap-10 rounded-card bg-paper-lift p-8 shadow-card sm:p-10">
           <div>
-            <p className="display text-title">Real Evolution {EMERALD.version}</p>
-            <p className="mt-2 text-body text-ash">pokemon-real-evolution.bps</p>
+            <p className="display text-title">Emerald Evolved {EMERALD.version}</p>
+            <p className="mt-2 text-body text-ash">emerald-evolved.bps</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            {SITE.patchReady ? (
+            {ready ? (
               <a href={EMERALD.patchUrl} download className="btn btn-ink">Download the patch</a>
             ) : (
               <button className="btn btn-ink" disabled>Download the patch</button>
             )}
             <a href={SITE.github} className="btn btn-quiet" rel="noreferrer">Source on GitHub</a>
           </div>
-          {!SITE.patchReady && <p className="text-meta text-ash">The patch goes up the day the video does.</p>}
+          {ready === false && <p className="text-meta text-ash">The patch goes up the day the video does.</p>}
         </div>
 
         <div className="rounded-card bg-paper-sink p-8 sm:p-10">
@@ -54,8 +57,12 @@ export function Download() {
             <dd className="mt-1 font-mono text-meta break-all text-ink-soft">{EMERALD.sourceSha1}</dd>
           </div>
           <div>
-            <dt className="text-meta font-semibold text-ink">After patching</dt>
-            <dd className="mt-1 font-mono text-meta text-ash">Published with the release</dd>
+            <dt className="text-meta font-semibold text-ink">After patching: Emerald Evolved {EMERALD.version}</dt>
+            <dd className="mt-1 font-mono text-meta break-all text-ink-soft">{EMERALD.targetSha1}</dd>
+          </div>
+          <div>
+            <dt className="text-meta font-semibold text-ink">The patch, emerald-evolved.bps</dt>
+            <dd className="mt-1 font-mono text-meta break-all text-ink-soft">{EMERALD.patchSha1}</dd>
           </div>
         </dl>
       </section>

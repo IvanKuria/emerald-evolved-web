@@ -3,7 +3,5 @@
 export const SITE = {
   /** The YouTube video this launches with. Until it is set, "Watch the video" becomes "Try the sandbox". */
   video: null as string | null,
-  github: 'https://github.com/IvanKuria/pokeemerald-real-evolution',
-  /** Set when the release .bps exists in public/patch/. */
-  patchReady: false,
+  github: 'https://github.com/IvanKuria/emerald-evolved',
 }

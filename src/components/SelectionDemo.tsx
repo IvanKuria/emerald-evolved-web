@@ -59,10 +59,10 @@ export function SelectionDemo() {
                     onClick={() => pick(ri, ki)}
                     disabled={row.picked !== null}
                     aria-label={`Breed baby ${ki + 1} of generation ${row.gen}`}
-                    className="max-w-16 min-w-0 flex-1 rounded-field p-0.5 transition-[opacity,transform,background-color] duration-300 enabled:hover:-translate-y-1 enabled:hover:bg-paper-sink"
+                    className="flex max-w-20 min-w-0 flex-1 justify-center rounded-field px-0.5 pt-1.5 pb-1 transition-[opacity,transform,background-color] duration-300 enabled:hover:-translate-y-1 enabled:hover:bg-paper-sink"
                     style={{ opacity: faded ? 0.28 : 1, background: isPicked ? 'var(--sprout-wash)' : undefined }}
                   >
-                    <Creature coat={k.coat} mane={k.mane} scale={1} fluid />
+                    <Creature coat={k.coat} mane={k.mane} scale={2} fit />
                   </button>
                 )
               })}

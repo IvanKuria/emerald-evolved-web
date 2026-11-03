@@ -11,6 +11,9 @@ export interface PatchTarget {
   sourceSha1: string
   /** SHA-1 the patched result must have; null until the release is built. */
   targetSha1: string | null
+  /** the .bps itself: its SHA-1 and size (the size is how the site tells the real file from a missing one) */
+  patchSha1?: string
+  patchSize?: number
   patchUrl: string
   /** Name for the patched file if the player downloads it for a desktop emulator. */
   outName: string
@@ -25,10 +28,13 @@ export interface PatchTarget {
 export const EMERALD: PatchTarget = {
   baseName: 'Pokémon Emerald (US)',
   sourceSha1: 'f3ae088181bf583e55daf962a92bb46f4f1d07b7',
-  targetSha1: null,
-  patchUrl: '/patch/pokemon-real-evolution.bps',
-  outName: 'pokemon-real-evolution.gba',
-  version: 'v0.1',
+  // BUILD_STATUS.md "Release artefacts": vanilla + patch == release ROM, byte for byte
+  targetSha1: '72311265f1fa163f9278f8425e0d007e2c926aa7',
+  patchSha1: 'e1260af62f5e55b14ec521bbe50d0f8f0e54c252',
+  patchSize: 24_554_093,
+  patchUrl: '/patch/emerald-evolved.bps',
+  outName: 'emerald-evolved.gba',
+  version: 'v1.0',
 }
 
 /* The homebrew test cartridge in /testrom (ours, CC0). It exists so the
@@ -102,4 +108,17 @@ export function judge(rom: Uint8Array, sha1: string, target: PatchTarget): Verdi
     title: `That’s “${h.title || 'an unknown game'}”`,
     detail: `The patch needs ${target.baseName}.`,
   }
+}
+
+/* Is the release patch on this site? It is served from our own origin
+   (scripts/fetch-patch.mjs puts it there at build time) and is not in
+   the repo. A missing file can come back as the app's HTML page, so the
+   answer is "yes" only when the size is the patch's. */
+let available: Promise<boolean> | null = null
+export function patchAvailable(t: PatchTarget = EMERALD): Promise<boolean> {
+  if (t !== EMERALD) return Promise.resolve(true)
+  available ??= fetch(t.patchUrl, { method: 'HEAD' })
+    .then((r) => r.ok && Number(r.headers.get('content-length')) === t.patchSize)
+    .catch(() => false)
+  return available
 }

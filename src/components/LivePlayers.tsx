@@ -6,7 +6,8 @@ import { usePresence } from '../lib/presence'
 
 export function LivePlayers({ className = '', long = false }: { className?: string; long?: boolean }) {
   const c = usePresence()
-  if (!c) return null
+  // nothing until there is a real number, and nothing while nobody is playing
+  if (!c || c.playing < 1) return null
   const n = c.playing
   const text = long
     ? `${n.toLocaleString()} ${n === 1 ? 'person is' : 'people are'} playing right now`

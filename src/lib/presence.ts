@@ -1,4 +1,4 @@
-/* The client half of the live counter (server half: counter/worker.ts).
+/* The client half of the live counter (server half: api/presence, server/presence.ts).
 
    One random id per tab, kept in sessionStorage. A heartbeat every 25
    seconds while the tab is visible says whether a game is running; the
@@ -33,14 +33,21 @@ export interface Counts {
   playing: number
 }
 
+let off = false
+
 async function beat() {
-  if (document.hidden) return
+  if (document.hidden || off) return
   try {
     const r = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ sid, playing }),
     })
+    if (r.status === 503) {
+      // no storage behind the API: the counter doesn't exist yet, so stop asking and show nothing
+      clearInterval(timer)
+      off = true
+    }
     if (!r.ok) throw new Error(String(r.status))
     last = (await r.json()) as Counts
   } catch {
@@ -56,7 +63,7 @@ function start() {
   timer = window.setInterval(beat, EVERY)
   document.addEventListener('visibilitychange', () => !document.hidden && beat())
   addEventListener('pagehide', () =>
-    navigator.sendBeacon?.(`${ENDPOINT}/leave`, new Blob([JSON.stringify({ sid })], { type: 'application/json' })),
+    !off && navigator.sendBeacon?.(`${ENDPOINT}/leave`, new Blob([JSON.stringify({ sid })], { type: 'application/json' })),
   )
 }
 

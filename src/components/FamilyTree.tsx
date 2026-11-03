@@ -14,9 +14,10 @@ import { genePalette, loadEevee, type IndexedSprite } from '../lib/sprites'
 ------------------------------------------------------------------ */
 
 const W = 1000
-const H = 200
+/* One species is one band, so the tree is short until there is a split to draw. */
+const heightFor = (n: number) => (n === 1 ? 90 : Math.min(260, 120 + n * 40))
 
-function lanes(all: Species[]) {
+function lanes(all: Species[], H: number) {
   const kids = new Map<number | null, Species[]>()
   for (const s of all) {
     const k = kids.get(s.parent) ?? []
@@ -47,7 +48,8 @@ export function FamilyTree({ sim, tick }: { sim: Sim; tick: number }) {
   useEffect(() => void loadEevee().then(setSheet), [])
   void tick
   const all = [...sim.species.values()]
-  const lane = lanes(all)
+  const H = heightFor(all.length)
+  const lane = lanes(all, H)
   const span = Math.max(40, sim.gen)
   const X = (g: number) => 8 + (g / span) * (W - 110)
   const pop = sim.p.pop

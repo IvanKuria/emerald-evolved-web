@@ -49,8 +49,9 @@ export function How() {
 }`}
           </div>
           <p className="quiet">
-            The browser version of this is <code>Sim.step()</code> in <code>src/sim/engine.ts</code>. The C version lands
-            in <code>src/daycare.c</code> when the patch is released.
+            In the game this is <code>InheritGenome()</code> in the hack’s <code>src/genetics.c</code>, with the real
+            gene layout. The sandbox runs a simpler version, <code>Sim.step()</code> in this site’s{' '}
+            <code>src/sim/engine.ts</code>.
           </p>
 
           <h2 id="selection">Selection</h2>
@@ -77,27 +78,38 @@ if (!EggGroupsOverlap(eggGroups[0], eggGroups[1]))
     return PARENTS_INCOMPATIBLE;`}
           </div>
           <p>
-            In this hack that table is gone. Two Pokémon can breed if their genes are close enough, measured on the
-            hidden genes plus coat colour. Lots of real animals pick mates by colour, which is how hundreds of cichlid
-            species split apart in one African lake.
+            In this hack, for Pokémon of the same family, that check is genetic. Every Pokémon carries four pairs of
+            genes, A1 to A4 and B1 to B4, and each one comes in an old version and a new one. The new versions also
+            make the Pokémon bigger, so when you keep breeding the biggest ones you’re pushing them in. A new B next
+            to an old A doesn’t work together. Biologists call that a Dobzhansky–Muller incompatibility, and it’s how
+            most real species stop being able to have babies together.
           </p>
           <div className="code-plate" role="region" aria-label="New compatibility rule">
-            <span className="c">{'// Real Evolution: compatibility is genetic distance'}</span>
+            <span className="c">{'// Emerald Evolved: the Day Care counts finished incompatibilities'}</span>
 {`
-if (GeneticDistance(mon[0], mon[1]) > COMPAT_LIMIT)
-    return PARENTS_INCOMPATIBLE;`}
+d = 0;
+for (i = 0; i < 4; i++)
+    if ((B[i] of one parent is new/new) && (A[i] of the other is old/old))
+        d++;
+return (u8[]){ 70, 50, 20, 0 }[min(d, 3)];  `}<span className="c">{'// the game’s own four scores'}</span>
           </div>
           <p>
-            So when two groups get kept apart, by a river, or by you only ever breeding them separately, the hidden genes
-            drift apart until the Day Care gives you the game’s own line for parents that won’t breed: “The two prefer
-            to play with other POKéMON than each other.” Nobody decided they’re a new species. It falls out of the rule.
+            Those four numbers are the ones Emerald already uses, and each one comes with its own line from the Day Care
+            man. As your line drifts away from the wild ones he goes from “The two seem to get along very well” to “The
+            two seem to get along” to “The two don’t seem to like each other much”. At three finished pairs you get the
+            game’s line for parents that won’t breed: “The two prefer to play with other POKéMON than each other.”
+            Nobody decided they’re a new species. It falls out of the rule.
+          </p>
+          <p>
+            Breeding the biggest one every time gets a line there in about twenty generations; breeding casually never
+            does. The <Link to="/sandbox">sandbox</Link> runs a simpler version of the same idea on a whole population at once, so you
+            can watch it happen in a minute. When it happens in your game, the <Link to="/species">Species Registry</Link> reads
+            your save and lets you name what you made.
           </p>
           <div className="not-prose my-10 flex items-end justify-center gap-10">
             <Creature coat={0.48} mane={0.15} scale={2} label="A green Eevee lineage" />
             <Creature coat={0} scale={2} label="An ordinary Eevee" />
-            <div style={{ transform: 'scaleX(-1)' }}>
-              <Creature coat={-0.55} mane={-0.2} scale={2} label="A violet Eevee lineage" />
-            </div>
+            <Creature coat={-0.55} mane={-0.2} scale={2} flip label="A dark Eevee lineage" />
           </div>
 
           <h2 id="browser">How the browser plays it</h2>
@@ -123,7 +135,7 @@ if (GeneticDistance(mon[0], mon[1]) > COMPAT_LIMIT)
           <ul>
             <li>pret’s <strong>pokeemerald</strong> decompilation, and rh-hideout’s <strong>pokeemerald-expansion</strong>, which the hack is built on.</li>
             <li><strong>mGBA</strong> by endrift and contributors, WebAssembly build by Nicholas VanCise (thenick775), MPL-2.0, distributed unmodified.</li>
-            <li>Every sprite, window, font and sound on this site is from Pokémon Emerald itself, extracted from the decompilation. Pokémon is © Nintendo, Creatures and GAME FREAK.</li>
+            <li>Every window, font and interface sprite on this site is from Pokémon Emerald itself, extracted from the decompilation. The Pokémon on species cards are the sprites the hack draws, from pokeemerald-expansion’s graphics. Pokémon is © Nintendo, Creatures and GAME FREAK.</li>
             <li>Bebas Neue by Ryoichi Tsunekawa and Figtree by Erik Kennedy, both under the SIL Open Font License.</li>
           </ul>
         </div>

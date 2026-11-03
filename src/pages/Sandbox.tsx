@@ -3,6 +3,8 @@ import { Sim, decodeParams, encodeParams, type SimEvent, type SimParams } from '
 import { Field, type FieldHandle } from '../components/Field'
 import { FamilyTree } from '../components/FamilyTree'
 import { DialogueBox } from '../components/DialogueBox'
+import { SplitReadout } from '../components/SplitReadout'
+import { DAYCARE_LINE, dayCare, type Score } from '../sim/daycare'
 
 /* ------------------------------------------------------------------
    Sandbox: the same engine as the hero and the ROM hack's rules, with
@@ -20,15 +22,17 @@ const SPEEDS = [1, 2, 4, 8, 16, 32]
 function lineFor(e: SimEvent, sim: Sim): string | null {
   switch (e.kind) {
     case 'mutation':
-      return 'A mutation! One EEVEE hatched a very different colour.'
+      return e.coat > 0 ? 'A mutation! An EEVEE hatched with a greener coat.' : 'A mutation! An EEVEE hatched with a darker coat.'
     case 'refused':
-      return 'The two prefer to play with other POKéMON than each other.'
+      return null
     case 'split':
       return `A new species split off: No.${sim.species.get(e.species)!.dex}.`
     case 'extinct':
       return `No.${sim.species.get(e.species)!.dex} died out.`
   }
 }
+
+const START = 'One species of EEVEE. Press play and watch.'
 
 export function Sandbox() {
   const initial = useRef(decodeParams(location.search))
@@ -42,7 +46,9 @@ export function Sandbox() {
   const [running, setRunning] = useState(true)
   const control = useRef<FieldHandle>({ genMs: 1000 / SPEEDS[3], sprite: 0.13 })
   const [tick, setTick] = useState(0)
-  const [line, setLine] = useState('A single species of EEVEE. Press play and watch.')
+  const [line, setLine] = useState(START)
+  const [breaking, setBreaking] = useState(false)
+  const lastScore = useRef<Score>(70)
   const [log, setLog] = useState<{ gen: number; text: string }[]>([])
   const [copied, setCopied] = useState(false)
 
@@ -50,11 +56,22 @@ export function Sandbox() {
     control.current.genMs = running ? 1000 / SPEEDS[speed] : 0
   }, [running, speed])
 
+  // a phone's field holds the same population in a third of the room, so each Eevee is drawn a whole step smaller
+  useEffect(() => {
+    const fit = () => (control.current.sprite = innerWidth < 640 ? 0.09 : 0.13)
+    fit()
+    addEventListener('resize', fit)
+    return () => removeEventListener('resize', fit)
+  }, [])
+
   const restart = useCallback((p: SimParams) => {
     setParams(p)
     sim.current = new Sim(p)
     setLog([])
-    setLine('A single species of EEVEE. Press play and watch.')
+    setLine(START)
+    lastScore.current = 70
+    control.current.pulse = 0
+    setBreaking(false)
     setTick((t) => t + 1)
   }, [])
 
@@ -69,11 +86,27 @@ export function Sandbox() {
   const lastRender = useRef(0)
   const onStep = useCallback((ev: SimEvent[]) => {
     const now = performance.now()
+    const s = sim.current
+    const one = s.livingSpecies().length === 1
     for (const e of ev) {
-      const text = lineFor(e, sim.current)
+      const text = lineFor(e, s)
       if (!text) continue
-      if (e.kind !== 'mutation') setLine(text)
+      if (e.kind === 'split' && s.species.size === 2) {
+        control.current.pulse = now
+        setBreaking(true)
+        setLine(DAYCARE_LINE[0])
+        setTimeout(() => setBreaking(false), 1500)
+      } else if (e.kind !== 'mutation') setLine(text)
       setLog((l) => [{ gen: e.gen, text }, ...l].slice(0, 40))
+    }
+    if (one) {
+      const { score } = dayCare(s.crossDistance(), false)
+      if (score !== lastScore.current) {
+        const text = DAYCARE_LINE[score]
+        lastScore.current = score
+        setLine(text)
+        setLog((l) => [{ gen: s.gen, text: `Day Care: “${text.replace('\n', ' ')}”` }, ...l].slice(0, 40))
+      }
     }
     if (now - lastRender.current > 120 || ev.length) {
       lastRender.current = now
@@ -84,6 +117,7 @@ export function Sandbox() {
   const set = (patch: Partial<SimParams>) => restart({ ...params, ...patch })
   const s = sim.current
   const living = s.livingSpecies().length
+  const firstNew = living > 1 ? [...s.species.values()].find((x) => x.parent !== null && x.died === null)?.dex : undefined
 
   const share = async () => {
     const url = `${location.origin}/sandbox?${encodeParams(s.p, s.gen)}`
@@ -112,18 +146,16 @@ export function Sandbox() {
             sim={sim}
             control={control}
             onStep={onStep}
-            className="block aspect-[4/3] w-full sm:aspect-[16/9]"
+            className="block aspect-square w-full sm:aspect-[16/9]"
             label={`Population of ${params.pop} Eevee at generation ${s.gen}, ${living} species.`}
           />
           <div className="pointer-events-none absolute inset-x-0 top-0 hidden justify-between sm:flex px-5 pt-4 text-meta font-semibold text-ash sm:px-7">
             <span>{params.habitats ? 'Favours small, green' : 'Same habitat'}</span>
             <span>{params.habitats ? 'Favours big, dark' : 'Same habitat'}</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 flex items-end justify-between px-5 pb-4 sm:px-7">
+          <div className="flex items-end justify-between gap-4 px-5 pt-1 pb-5 sm:px-7">
             <p className="display text-[2.4rem] leading-none text-ink tc">Gen {s.gen}</p>
-            <p className={`display text-[2.4rem] leading-none tc ${living > 1 ? 'text-sprout-ink' : 'text-ink'}`}>
-              {living} {living === 1 ? 'species' : 'species'}
-            </p>
+            <SplitReadout distance={s.crossDistance()} species={living} breaking={breaking} size="lg" newDex={firstNew} />
           </div>
         </div>
 
@@ -181,13 +213,13 @@ export function Sandbox() {
         </div>
         <div className="px-1">
           <h2 className="text-body font-bold text-ink">What happened</h2>
-          {log.length === 0 && <p className="mt-2 text-meta text-ash">Mutations, refusals and splits show up here as they happen.</p>}
+          {log.length === 0 && <p className="mt-2 text-meta text-ash">Mutations, the Day Care’s verdicts and splits show up here as they happen.</p>}
           <ol className="mt-3 flex max-h-[360px] flex-col gap-2 overflow-auto text-meta text-ash">
             {log.map((l, i) => (
               <li key={i} className="flex gap-3">
                 <span className="w-10 shrink-0 font-semibold text-ink-soft tc">{l.gen}</span>
                 <span className={l.text.startsWith('A new species') ? 'font-semibold text-sprout-ink' : ''}>
-                  {l.text.replace('EEVEE', 'Eevee').replace('A mutation! One', 'Mutation: one').replace('POKéMON', 'Pokémon')}
+                  {l.text.replace('EEVEE', 'Eevee').replace('A mutation! An', 'Mutation: an').replace('POKéMON', 'Pokémon')}
                 </span>
               </li>
             ))}
@@ -264,12 +296,15 @@ async function saveCard(sim: Sim) {
   ctx.textAlign = 'center'
   ctx.font = '400 104px "Bebas Neue"'
   const n = sim.livingSpecies().length
-  ctx.fillText(`Generation ${sim.gen}: ${n} ${n === 1 ? 'species' : 'species'}`.toUpperCase(), 600, 112)
+  ctx.fillText(`Generation ${sim.gen}: ${n} species`.toUpperCase(), 600, 112)
+  ctx.font = '400 30px "Bebas Neue"'
+  ctx.fillStyle = '#6c675e'
+  ctx.fillText('EMERALD EVOLVED SANDBOX', 600, 600)
   c.toBlob((b) => {
     if (!b) return
     const a = document.createElement('a')
     a.href = URL.createObjectURL(b)
-    a.download = `real-evolution-gen-${sim.gen}.png`
+    a.download = `emerald-evolved-gen-${sim.gen}.png`
     a.click()
   })
 }

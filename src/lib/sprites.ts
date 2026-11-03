@@ -121,7 +121,7 @@ function paint(s: IndexedSprite, frame: number, pal: number[][]): HTMLCanvasElem
 }
 
 /** The silhouette, blurred, at 4x so it stays soft when scaled up. */
-function shadowOf(sprite: HTMLCanvasElement): HTMLCanvasElement {
+export function shadowOf(sprite: HTMLCanvasElement): HTMLCanvasElement {
   const S = 4
   const pad = 12 * S
   const c = document.createElement('canvas')
@@ -154,3 +154,10 @@ export function spriteFor(s: IndexedSprite, coat: number, mane: number, shiny = 
 
 /** Shadow geometry shared by every renderer, so the light comes from one place. */
 export const SHADOW = { dx: 0.09, dy: 0.13, alpha: 0.26, pad: 12 }
+
+/* Where Eevee actually is inside its 64x64 cell: the union of both
+   anim_front frames' opaque pixels (x 11-48, y 11-54), with a pixel of
+   air. Layout uses this box, not the cell, so a row of Eevee is spaced
+   by Eevee and not by empty canvas. Row 54 is the feet. */
+export const EEVEE_BOX = { x: 10, y: 10, w: 40, h: 46 }
+export const EEVEE_FEET = { y: 55, x0: 16, x1: 46 }

@@ -152,7 +152,7 @@ export function fitness(c: Creature, p: SimParams) {
 /* Who can breed with whom. Hidden genes plus coat, because in real
    animals colour is often how they recognise their own kind (Lake
    Victoria cichlids speciated along exactly this line). */
-const COMPAT_LIMIT = 0.55
+export const COMPAT_LIMIT = 0.55
 export function distance(a: Creature, b: Creature) {
   let d = 0
   for (let g = 3; g < GENES; g++) {
@@ -414,6 +414,19 @@ export class Sim {
 
   livingSpecies() {
     return [...this.species.values()].filter((s) => s.died === null)
+  }
+
+  /** Mean genetic distance between a creature on the left half and one on
+      the right, over every such pair. NaN if a half is empty. This is what
+      the Day Care readout shows: how well one from each side would get on. */
+  crossDistance() {
+    const L: Creature[] = []
+    const R: Creature[] = []
+    for (const c of this.creatures) (c.x < 0.5 ? L : R).push(c)
+    if (!L.length || !R.length) return NaN
+    let d = 0
+    for (const a of L) for (const b of R) d += distance(a, b)
+    return d / (L.length * R.length)
   }
 }
 
