@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs'
 
 const OUT = 'public/patch/emerald-evolved.bps'
-const SHA1 = 'e1260af62f5e55b14ec521bbe50d0f8f0e54c252' // keep in step with src/lib/rom.ts EMERALD.patchSha1
+const SHA1 = '6bda9a1e269c1812867294633ee174e103d61152' // keep in step with src/lib/rom.ts EMERALD.patchSha1
 const sha1 = (b) => createHash('sha1').update(b).digest('hex')
 
 mkdirSync('public/patch', { recursive: true })

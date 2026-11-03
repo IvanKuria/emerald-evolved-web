@@ -298,7 +298,7 @@ events with capture so a sliding thumb still releases.
    about isolation. With no keys the site still works and simply hides the counter and gallery.
 5. The patch is not in the repo; it is a GitHub release asset. Set `PATCH_URL` in the Vercel
    project to the asset's download URL. `scripts/fetch-patch.mjs` (run before every build) downloads
-   it into `public/patch/`, checks its SHA-1 (`e1260af6...`) and the site then serves it from its
+   it into `public/patch/`, checks its SHA-1 (`6bda9a1e...`) and the site then serves it from its
    own origin, which the cross-origin-isolated Play page needs. Without it, Play checks the ROM and
    says the patch isn't out yet, and Download disables its button. Locally, `PATCH_FILE=<path>`.
 
@@ -308,11 +308,13 @@ that, the pay-as-you-go tier is per command.
 
 ### The real ROM, end to end
 
-`scripts/real-rom-check.mjs <retail Emerald> <save 03>` (PC only; neither file is in the repo):
+`scripts/real-rom-check.mjs <retail Emerald> <a save>` (PC only; neither file is in the repo):
 the retail ROM goes in, is checked, the 24 MB release patch downloads and applies (the bar is half
-download, half patching), the SHA-1 of the result must be `72311265...`, mGBA boots it, Start and A
-reach the main menu, then the ROM's save 03 is imported and "Look for new species in this save"
-hands it to the registry, which finds the two generation-24 Eevee. Passes in Chromium (desktop,
+download, half patching), the SHA-1 of the result must be `b833daac...`, mGBA boots it, Start and A
+reach the main menu, then a save is imported and "Look for new species in this save" hands it to
+the registry. With the rebuilt patch (`6bda9a1e...`) and `saves/eevee_line/05_final_species.sav` it
+finds the two generation-36 Eevee; the line's earlier milestone saves (also in
+`tests/fixtures/eevee_line/`) are checked by the tests and hold no new species. Passes in Chromium (desktop,
 boots in about 2 s) and WebKit with the iPhone 15 profile (about 20 s), 2 Nov 2026.
 
 ### Phones

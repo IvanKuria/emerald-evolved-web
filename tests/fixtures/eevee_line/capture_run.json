@@ -1,0 +1,98 @@
+{
+ "attempt": 1,
+ "species": "EEVEE",
+ "eggs_per_generation": 10,
+ "final_generation": 36,
+ "eggs_laid": 360,
+ "eggs_hatched": 276,
+ "eggs_failed": 84,
+ "first_get_along_generation": 17,
+ "first_dont_like_generation": 30,
+ "first_failed_egg_generation": 1,
+ "final_pair_inline_score": 70,
+ "final_pair_steps_to_egg_median": 255,
+ "final_heights_cm": [
+  53,
+  54
+ ],
+ "milestones": [
+  {
+   "name": "gen1",
+   "generation": 1,
+   "eggs_laid": 10,
+   "eggs_hatched": 9,
+   "eggs_failed": 1,
+   "score_vs_wild_F": 70,
+   "score_vs_wild_M": 70,
+   "inline_score": 70,
+   "heights_cm": [
+    29,
+    33
+   ]
+  },
+  {
+   "name": "first_get_along",
+   "generation": 17,
+   "eggs_laid": 170,
+   "eggs_hatched": 120,
+   "eggs_failed": 50,
+   "score_vs_wild_F": 50,
+   "score_vs_wild_M": 50,
+   "inline_score": 50,
+   "heights_cm": [
+    42,
+    45
+   ]
+  },
+  {
+   "name": "first_dont_like",
+   "generation": 30,
+   "eggs_laid": 300,
+   "eggs_hatched": 218,
+   "eggs_failed": 82,
+   "score_vs_wild_F": 20,
+   "score_vs_wild_M": 20,
+   "inline_score": 70,
+   "heights_cm": [
+    47,
+    52
+   ]
+  },
+  {
+   "name": "first_failed_egg",
+   "generation": 1,
+   "eggs_laid": 6,
+   "eggs_hatched": 5,
+   "eggs_failed": 1,
+   "score_vs_wild_F": 70,
+   "score_vs_wild_M": 70,
+   "inline_score": 70,
+   "heights_cm": [
+    30,
+    31
+   ]
+  },
+  {
+   "name": "final_species",
+   "generation": 36,
+   "eggs_laid": 360,
+   "eggs_hatched": 276,
+   "eggs_failed": 84,
+   "score_vs_wild_F": 0,
+   "score_vs_wild_M": 0,
+   "inline_score": 70,
+   "heights_cm": [
+    53,
+    54
+   ]
+  }
+ ],
+ "how": "Test ROM build of 2026-11-02 16:00, MODE=2, first line that completed (attempt 1). Real Day Care egg code, real hatch data path (ScriptHatchMon), keep tallest son + daughter by the summary HEIGHT. Scores vs a wild Eevee with no derived alleles.",
+ "saves": {
+  "gen1": "01_gen1.sav",
+  "first_get_along": "02_first_get_along.sav",
+  "first_dont_like": "03_first_dont_like.sav",
+  "first_failed_egg": "04_first_failed_egg.sav (party: parents + the doomed egg, 1 egg cycle left)",
+  "final_species": "05_final_species.sav (party: final daughter, final son, wild-type female, wild-type male)"
+ }
+}

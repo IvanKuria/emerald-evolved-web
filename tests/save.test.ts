@@ -114,6 +114,39 @@ describe('the ROM’s own test saves (BUILD_STATUS.md, web/genome_decode.py)', (
   })
 })
 
+describe('the rebuilt ROM’s Eevee line, milestone by milestone (saves/eevee_line, capture_run.json)', () => {
+  const read = (f: string) => parseSave(new Uint8Array(readFileSync(`tests/fixtures/eevee_line/${f}`)))
+  const line = (f: string) => read(f).mons.filter((m) => m.where.startsWith('Party') && !m.isEgg && (m.generation ?? 0) > 0)
+  const cases: [string, number, number][] = [
+    ['01_gen1.sav', 1, 70],
+    ['02_first_get_along.sav', 17, 50],
+    ['03_first_dont_like.sav', 30, 20],
+    ['05_final_species.sav', 36, 0],
+  ]
+  for (const [file, gen, score] of cases)
+    it(`${file}: the Day Care says ${score} against a wild Eevee`, () => {
+      const mons = line(file)
+      expect(Math.max(...mons.map((m) => m.generation ?? 0))).toBe(gen)
+      // the milestone is reached when the first of the pair gets there
+      expect(Math.min(...mons.map((m) => scoreVsWild(m.genome).score))).toBe(score)
+    })
+
+  it('only the final save holds a new species, and only the line in it', () => {
+    for (const f of ['01_gen1.sav', '02_first_get_along.sav', '03_first_dont_like.sav', '04_first_failed_egg.sav'])
+      expect(read(f).mons.some((m) => !m.isEgg && isNewSpecies(m.genome))).toBe(false)
+    const final = read('05_final_species.sav').mons
+    expect(final.map((m) => [m.generation, isNewSpecies(m.genome)])).toEqual([
+      [36, true],
+      [36, true],
+      [0, false],
+      [0, false],
+    ])
+    const m = final[0]
+    const card = buildCard({ species: m.species, genome: toHex(m.packed), personality: m.personality, generation: m.generation, trainer: 'EVO', name: 'Tallgrass' })
+    expect(card.ok && card.card).toMatchObject({ species: 133, generation: 36, size: 53, d: 3 })
+  })
+})
+
 describe('genome', () => {
   it('pack and unpack are inverse', () => expect(unpack(pack(NEW_SPECIES))).toEqual(NEW_SPECIES))
   it('size follows sim/SPECIATION.md', () => expect(sizeOf(NEW_SPECIES, 0x0badf00d)).toBe(4 * 13 + 5))

@@ -29,9 +29,9 @@ export const EMERALD: PatchTarget = {
   baseName: 'Pokémon Emerald (US)',
   sourceSha1: 'f3ae088181bf583e55daf962a92bb46f4f1d07b7',
   // BUILD_STATUS.md "Release artefacts": vanilla + patch == release ROM, byte for byte
-  targetSha1: '72311265f1fa163f9278f8425e0d007e2c926aa7',
-  patchSha1: 'e1260af62f5e55b14ec521bbe50d0f8f0e54c252',
-  patchSize: 24_554_093,
+  targetSha1: 'b833daac0573f700ec634b946cbdf55253739755',
+  patchSha1: '6bda9a1e269c1812867294633ee174e103d61152',
+  patchSize: 24_555_892,
   patchUrl: '/patch/emerald-evolved.bps',
   outName: 'emerald-evolved.gba',
   version: 'v1.0',
