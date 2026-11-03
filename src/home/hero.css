@@ -127,9 +127,11 @@
   animation: walker-in 820ms var(--ease-out) both;
 }
 
+/* `translate`, not `transform`: the belt owns each walker's transform every frame, and a keyframe on
+   the same property would override it for as long as the animation fills */
 @keyframes walker-in {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; translate: 0 18px; }
+  to { opacity: 1; translate: 0 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

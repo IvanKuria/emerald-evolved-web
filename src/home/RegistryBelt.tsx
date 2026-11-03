@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import SimpleMarquee from '../components/fancy/simple-marquee'
-import { SpeciesCard } from '../components/SpeciesCard'
+import { PathBelt } from '../components/PathBelt'
+import { SpeciesCard, type CardData } from '../components/SpeciesCard'
 import { Rise } from '../components/Rise'
 import { fetchListing, type Listing } from '../registry/client'
-import { cssPx, deviceScale, useDpr } from '../lib/pixels'
+import { cssPx, deviceScale, useBoxWidth, useDpr } from '../lib/pixels'
 
 /* ------------------------------------------------------------------
    Name yours.
@@ -41,17 +41,7 @@ export function RegistryBelt() {
       </Rise>
 
       {cards.length >= 3 ? (
-        <div className="names__belt">
-          <SimpleMarquee baseVelocity={reduce ? 0 : 18} direction="left" repeat={3} draggable slowdownOnHover slowDownFactor={0.2} dragSensitivity={0.12}>
-            <div className="names__row">
-              {cards.map((c) => (
-                <div key={c.id} className="names__card">
-                  <SpeciesCard card={c} />
-                </div>
-              ))}
-            </div>
-          </SimpleMarquee>
-        </div>
+        <Belt cards={cards} reduce={reduce} />
       ) : cards.length > 0 ? (
         <Rise className="names__few">
           {cards.map((c) => (
@@ -71,6 +61,29 @@ export function RegistryBelt() {
         Species Registry
       </Link>
     </section>
+  )
+}
+
+/* The belt is the same engine as the hero's arcs (components/PathBelt.tsx), on a straight path one
+   card wider than the screen, so a card is always arriving: grab it, flick it, it slows under the
+   pointer and glides back to speed. */
+const CARD = 300
+const GAP = 20
+
+function Belt({ cards, reduce }: { cards: CardData[]; reduce: boolean }) {
+  const [ref, w] = useBoxWidth<HTMLDivElement>(1200)
+  const L = w + CARD + GAP
+  const count = Math.max(cards.length, Math.floor(L / (CARD + GAP)))
+  return (
+    <div ref={ref} className="names__belt">
+      <PathBelt path={`M ${-CARD - GAP} 0 L ${w} 0`} count={count} speed={reduce ? 0 : 26} direction={-1} slowOnHover={0.2} anchor={[0, -18]} className="names__track">
+        {(i) => (
+          <div className="names__card">
+            <SpeciesCard card={cards[i % cards.length]} />
+          </div>
+        )}
+      </PathBelt>
+    </div>
   )
 }
 

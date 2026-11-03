@@ -43,11 +43,14 @@ count with someone playing.
 ### 2a. Home (v2, Nov 2026)
 
 Rebuilt after the owner rejected v1 (too much text, an uncreative composition, a weak sandbox
-showcase). The bar is frame-site's own home page, and its components are reused, adapted:
-`components/fancy/marquee-along-svg-path.tsx` and `simple-marquee.tsx` (fancycomponents, as frame
-carries them, plus a context so a belt item can read its place and the belt's velocity), `TextType`
-(plus `renderText`, so the game's message box draws what it types), `CountUp`, `Rise`, and the
-two easing tokens. Motion for entrances and belts, GSAP ScrollTrigger for the two pinned sections.
+showcase). The bar is frame-site's own home page, and its components are reused, adapted: `TextType`
+(plus `renderText`, so the game's message box draws what it types), `CountUp`, `Rise`, and the two
+easing tokens. The belts started as frame's fancycomponents marquees and were replaced by
+`components/PathBelt.tsx` after the owner called the arcs choppy and `scripts/measure-belts.mjs`
+agreed: one dt-based rAF loop, velocity eased with 1 - e^(-k dt), positions from an arc-length lookup
+table as fractional translate3d, facing with hysteresis. Measured at 60 Hz (GPU, and CPU throttled
+4x): cruising jerk p95 0.2-0.4 -> 0.012 px/frame, release fling peak 12-14 -> 1-2 px/frame. Motion
+for entrances, GSAP ScrollTrigger for the two pinned sections.
 
 1. **Hero** (`home/Hero.tsx`, `Arcs.tsx`, `Walker.tsx`, `Wordmark.tsx`): frame's two mirrored
    arcs, geometry derived from the box (and, on a tall phone, the window's proportions). The belts

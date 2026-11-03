@@ -351,10 +351,9 @@
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
 }
-.names__row {
-  display: flex;
-  gap: 20px;
-  padding: 18px 10px 30px;
+.names__track {
+  position: relative;
+  height: 330px;
 }
 .names__card {
   flex: none;

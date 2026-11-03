@@ -143,20 +143,25 @@ export function Split() {
           // the moment they become two species, both banks hop once, a wave out from the river
           const t = (now - hopAt) / 1000 - m.order * 0.06
           const hop = hopAt && t > 0 && t < 0.25 ? Math.round(Math.sin((t / 0.25) * Math.PI) * 4) : 0
-          const s = look.scale
-          const top = Math.round(m.y - (feet + 1) * s) - hop
-          const left = Math.round(x - 16 * s)
+          // positions in device pixels, not game pixels: a walker glides a device pixel at a time
+          // while its art stays at a whole k device pixels per game pixel
+          const d = 32 * k
+          const left = Math.round(x * k - d / 2)
+          const top = Math.round(m.y * k - (feet + 1) * k - hop * k)
+          ctx.setTransform(1, 0, 0, 1, 0, 0)
+          ctx.imageSmoothingEnabled = false
           ctx.globalAlpha = 0.2
-          ctx.drawImage(shadow, Math.round(x - 8 * s), Math.round(m.y - 5 * s), 16 * s, 8 * s)
+          ctx.drawImage(shadow, Math.round(x * k - 8 * k), Math.round(m.y * k - 5 * k), 16 * k, 8 * k)
           ctx.globalAlpha = 1
           const sp = paintFollower(sheet, index, look)
           if (flip) {
             ctx.save()
-            ctx.translate(left + 32 * s, top)
+            ctx.translate(left + d, top)
             ctx.scale(-1, 1)
-            ctx.drawImage(sp, 0, 0, 32 * s, 32 * s)
+            ctx.drawImage(sp, 0, 0, d, d)
             ctx.restore()
-          } else ctx.drawImage(sp, left, top, 32 * s, 32 * s)
+          } else ctx.drawImage(sp, left, top, d, d)
+          ctx.setTransform(k, 0, 0, k, 0, 0)
         }
         raf = requestAnimationFrame(frame)
       }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import MarqueeAlongSvgPath from '../components/fancy/marquee-along-svg-path'
+import { PathBelt } from '../components/PathBelt'
 import { Walker, walkerBox, UNDER, type Genes } from './Walker'
 import { deviceScale, useDpr } from '../lib/pixels'
 import { HUE_STEP } from '../save/layout'
@@ -179,11 +179,8 @@ export function Arc({ invert = false }: { invert?: boolean }) {
   const herd = useMemo(() => wildHerd(g.count), [g.count])
   const wildFns = useMemo(() => herd.map((h) => () => h), [herd])
   const band = invert ? g.bottom : g.top
-  /* percent of path per second for a steady stroll at this size */
-  const velocity = (STROLL * g.kCss * 100) / g.length
-  const pxPerPercent = g.length / 100 / g.kCss
-  /* feet on the curve: the canvas's bottom edge is UNDER game pixels below the feet */
-  const anchor = `50% calc(100% - ${(UNDER * k) / dpr}px)`
+  /* the walker's feet ride the curve: the bottom of its box less the room under the feet */
+  const anchor: [number, number] = [box.w / dpr / 2, (box.h - UNDER * k) / dpr]
 
   return (
     <div
@@ -192,36 +189,21 @@ export function Arc({ invert = false }: { invert?: boolean }) {
       style={{ height: band, '--arc-fade': `${g.fade}px` } as React.CSSProperties}
     >
       {width > 0 && (
-        <MarqueeAlongSvgPath
+        <PathBelt
           path={arcPath(width, g, invert)}
-          width={`${width}px`}
-          height={`${band}px`}
-          viewBox={`0 0 ${width} ${band}`}
-          baseVelocity={reduce ? 0 : velocity}
-          /* The two curves run opposite ways, so the pair reads as one turning mechanism. The
-             evolved line runs left to right, so its change reads the way the page does. */
-          direction={invert ? 'normal' : 'reverse'}
-          repeat={1}
-          draggable
-          dragSensitivity={0.07}
-          slowdownOnHover
-          slowDownFactor={0.22}
-          enableRollingZIndex={false}
+          count={g.count}
+          /* a steady stroll at this size; the two curves run opposite ways, so the pair reads as one
+             turning mechanism, and the evolved line runs left to right, the way the page reads */
+          speed={reduce ? 0 : STROLL * g.kCss}
+          direction={invert ? 1 : -1}
+          slowOnHover={0.22}
+          anchor={anchor}
           className="arc__track"
-          itemStyle={{ offsetRotate: '0deg', offsetAnchor: anchor }}
+          itemClassName="arc__walker"
+          itemStyle={(i) => ({ width: box.w / dpr, animationDelay: `${120 + i * 60}ms` })}
         >
-          {Array.from({ length: g.count }, (_, i) => (
-            <div className="arc__walker" key={`${i}-${g.count}`} style={{ width: box.w / dpr, animationDelay: `${120 + i * 60}ms` }}>
-              <Walker
-                k={k}
-                genes={invert ? evolvedAt : wildFns[i]}
-                pxPerPercent={pxPerPercent}
-                phase={i * 7}
-                forward="east"
-              />
-            </div>
-          ))}
-        </MarqueeAlongSvgPath>
+          {(i) => <Walker index={i} k={k} kCss={g.kCss} genes={invert ? evolvedAt : wildFns[i]} phase={i * 7} />}
+        </PathBelt>
       )}
     </div>
   )
