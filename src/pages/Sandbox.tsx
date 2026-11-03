@@ -5,9 +5,10 @@ import { FamilyTree } from '../components/FamilyTree'
 import { DialogueBox } from '../components/DialogueBox'
 import { SplitReadout } from '../components/SplitReadout'
 import { DAYCARE_LINE, dayCare, type Score } from '../sim/daycare'
+import { Rise } from '../components/Rise'
 
 /* ------------------------------------------------------------------
-   Sandbox: the same engine as the hero and the ROM hack's rules, with
+   Sandbox: the engine (sim/engine.ts) and the ROM hack's rules, with
    the dials exposed.
 
    Everything that decides the outcome is in the URL -- seed, settings
@@ -132,14 +133,13 @@ export function Sandbox() {
 
   return (
     <div className="mx-auto max-w-[1360px] px-5 pt-8 sm:px-8 sm:pt-14">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <h1 className="display text-hero">Watch a species split</h1>
-        <p className="max-w-[46ch] text-body text-ash md:pb-2 md:text-right">
-          The same rules as the game, sped up. Every link reproduces the exact run you’re looking at.
-        </p>
-      </div>
+      {/* Captions, as on Home: the explanation of the rules is on How it works. */}
+      <Rise className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <h1 className="display text-hero">Run your own valley.</h1>
+        <p className="text-body text-ash md:pb-2">Every link replays the exact run.</p>
+      </Rise>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <Rise delay={100} className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="relative overflow-hidden rounded-card bg-paper-lift shadow-card">
           <Field
             id="sandbox-field"
@@ -159,7 +159,8 @@ export function Sandbox() {
           </div>
         </div>
 
-        <aside className="flex flex-col gap-6 rounded-card bg-paper-lift p-6 shadow-card">
+        {/* The controls sit in the game's own window frame (text_window/1.png, nine-sliced). */}
+        <aside className="game-window flex flex-col gap-6 p-3">
           <div className="flex gap-2">
             <button className="btn btn-ink btn-sm flex-1" onClick={() => setRunning((r) => !r)}>
               {running ? 'Pause' : 'Play'}
@@ -199,19 +200,19 @@ export function Sandbox() {
             </button>
           </div>
         </aside>
-      </div>
+      </Rise>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex flex-col gap-6">
           <DialogueBox text={line} width={240} />
-          <div className="rounded-card bg-paper-lift p-5 shadow-card sm:p-7">
+          <div className="game-window p-2 sm:p-4">
             <h2 className="text-body font-bold text-ink">Family tree</h2>
             <div className="mt-3">
               <FamilyTree sim={s} tick={tick} />
             </div>
           </div>
         </div>
-        <div className="px-1">
+        <div className="game-window self-start p-2">
           <h2 className="text-body font-bold text-ink">What happened</h2>
           {log.length === 0 && <p className="mt-2 text-meta text-ash">Mutations, the Day Care’s verdicts and splits show up here as they happen.</p>}
           <ol className="mt-3 flex max-h-[360px] flex-col gap-2 overflow-auto text-meta text-ash">

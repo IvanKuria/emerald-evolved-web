@@ -1,0 +1,447 @@
+/* ------------------------------------------------------------------
+   The home page's sections below the hero. Same rule as hero.css:
+   component CSS only where a utility can't say it (a custom property
+   driven from a canvas, a pinned stage's geometry); the rest is
+   Tailwind in the components.
+------------------------------------------------------------------ */
+
+/* ---- every egg can mutate ---- */
+
+.egg {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 120px 20px 40px;
+  /* the flash's glow and flying shards may pass the edge; the page must never widen for them */
+  overflow-x: clip;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.egg__stage {
+  --flash: 0;
+  position: relative;
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+/* The game fades the whole screen to white as the egg bursts. On paper
+   that is a light coming up behind the egg, at the game's coefficient. */
+.egg__stage::before {
+  content: '';
+  position: absolute;
+  inset: -12% -6%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, var(--flash)), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.egg__button {
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(5px 8px 6px rgba(40, 30, 20, 0.22));
+}
+.egg__button:focus-visible {
+  outline-offset: -8px;
+}
+
+.egg__shelf {
+  margin-top: 12px;
+  min-height: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.egg__slot {
+  position: relative;
+  flex: none;
+  filter: drop-shadow(3px 5px 4px rgba(40, 30, 20, 0.2));
+  will-change: transform;
+}
+
+/* ---- you choose who breeds ---- */
+
+.breed {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 96px;
+  overflow: hidden;
+}
+
+.breed__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 0 20px;
+  position: relative;
+  z-index: 2;
+}
+
+.breed__read {
+  display: inline-flex;
+  gap: 14px;
+  font-size: var(--t-meta);
+  font-weight: 650;
+  color: var(--ash);
+}
+.breed__size {
+  color: var(--sprout-ink);
+}
+
+.breed__view {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  /* older generations fade up into the page instead of being cut off */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 34%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 34%, #000 100%);
+}
+
+.breed__tree {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  translate: -50% 0;
+  transition: transform 760ms var(--ease-out);
+}
+
+.breed__row {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 500ms var(--ease-out);
+  pointer-events: none;
+}
+.breed__row[data-on='true'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+.breed__row[data-past='true'] .breed__kid:not([data-kept='true']) {
+  opacity: 0.3;
+}
+
+.breed__lines {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+}
+.breed__lines path {
+  fill: none;
+  stroke: var(--ash-light);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  /* pathLength="1" on every path, so the draw-on is the whole line however long it is */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 900ms var(--ease-out), stroke 300ms var(--ease-out);
+}
+.breed__row[data-on='true'] .breed__lines path {
+  stroke-dashoffset: 0;
+}
+.breed__row[data-past='true'] .breed__lines path:not([data-kept='true']) {
+  stroke: var(--paper-deep);
+}
+.breed__lines path[data-kept='true'] {
+  stroke: var(--ink-soft);
+}
+
+.breed__kid {
+  position: absolute;
+  padding: 0;
+  opacity: 0;
+  translate: 0 14px;
+  transition:
+    opacity 520ms var(--ease-out),
+    translate 620ms var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+.breed__row[data-on='true'] .breed__kid {
+  opacity: 1;
+  translate: 0 0;
+}
+.breed__kid:disabled {
+  cursor: default;
+}
+.breed__kid:not(:disabled) {
+  cursor: pointer;
+}
+
+.breed__sprite {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(4px 6px 5px rgba(40, 30, 20, 0.22));
+}
+
+/* The PC's hand cursor: bounces between its first two frames, 30 game
+   frames each (sAnim_Cursor_Bouncing); opens over another Pokémon,
+   closes into a fist on the press. */
+.breed__hand {
+  position: absolute;
+  left: 50%;
+  margin-left: calc(var(--hand) * -0.38);
+  background-image: url('/game/hand_cursor.png');
+  background-repeat: no-repeat;
+  filter: drop-shadow(3px 5px 4px rgba(40, 30, 20, 0.24));
+  pointer-events: none;
+}
+.breed__hand[data-frame='-1'] {
+  animation: hand-bounce 1004ms steps(1) infinite;
+}
+.breed__hand[data-frame='2'] {
+  background-position: 0 calc(var(--hand) * -2);
+}
+.breed__hand[data-frame='3'] {
+  background-position: 0 calc(var(--hand) * -3);
+}
+@keyframes hand-bounce {
+  0% { background-position: 0 0; }
+  50% { background-position: 0 calc(var(--hand) * -1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breed__tree,
+  .breed__row,
+  .breed__kid,
+  .breed__lines path {
+    transition: none;
+  }
+  .breed__hand[data-frame='-1'] {
+    animation: none;
+  }
+}
+
+/* ---- until they can't ---- */
+
+.split {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 80px 16px 24px;
+  overflow: hidden;
+}
+
+.split__stage {
+  display: block;
+  /* a slice of the world: the river runs in from above and out below, faded like the arcs */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
+}
+
+.split__talk {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 1000px;
+}
+.split__box {
+  width: 100%;
+  white-space: normal;
+}
+
+.split__read {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.split__count {
+  font-size: var(--t-title);
+  line-height: 0.9;
+  color: var(--ink);
+  transition: color 400ms var(--ease-out);
+}
+.split__count[data-split='true'] {
+  color: var(--sprout-ink);
+  animation: drop-in 620ms var(--ease-spring) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .split__count[data-split='true'] {
+    animation: none;
+  }
+}
+
+/* ---- play it in your browser ---- */
+
+.play {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 140px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+
+.play__wrap,
+.play__fit {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.play__fit {
+  max-width: 820px;
+}
+
+/* A plain ink body, not a drawing of a console: one rounded bezel and a screen. */
+.play__device {
+  padding: clamp(10px, 2.6vw, 28px);
+  border-radius: clamp(16px, 3vw, 30px);
+  background: var(--ink);
+  box-shadow:
+    0 2px 6px rgba(40, 30, 20, 0.18),
+    0 30px 70px -24px rgba(40, 30, 20, 0.5);
+  transition:
+    box-shadow 260ms var(--ease-out),
+    transform 260ms var(--ease-out);
+}
+.play__device[data-over='true'] {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow:
+    0 0 0 4px var(--sprout),
+    0 30px 70px -24px rgba(40, 30, 20, 0.5);
+}
+
+.play__screen {
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #000;
+}
+
+.play__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---- name yours ---- */
+
+.names {
+  padding: 140px 0 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  overflow-x: clip;
+}
+
+.names__belt {
+  width: 100%;
+  touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 8%, #000 92%, transparent 100%);
+}
+.names__row {
+  display: flex;
+  gap: 20px;
+  padding: 18px 10px 30px;
+}
+.names__card {
+  flex: none;
+  width: 300px;
+}
+.names__few {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 16px;
+}
+
+.names__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.names__egg {
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+  filter: drop-shadow(6px 9px 7px rgba(40, 30, 20, 0.26));
+  /* the party icon bobs between its two frames, about every ten game frames */
+  animation: egg-bob 330ms steps(1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .names__egg {
+    animation: none;
+  }
+}
+
+/* ---- the close ---- */
+
+.close {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 160px 24px 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+
+/* ---- the game's own UI on the page ---- */
+
+.game-menu {
+  position: relative;
+  filter: drop-shadow(4px 7px 6px rgba(40, 30, 20, 0.2));
+}
+.game-menu__row {
+  position: absolute;
+  cursor: url('/game/cursor_point.png') 18 46, pointer;
+  border-radius: 2px;
+}
+.game-menu__row:focus-visible {
+  outline-offset: 1px;
+}
+
+/* The PC's hand is the mouse over anything you can take hold of: open over it, a fist while held. */
+.arc,
+.names__belt {
+  cursor: url('/game/cursor_open.png') 30 30, grab;
+}
+.arc:active,
+.names__belt:active {
+  cursor: url('/game/cursor_fist.png') 30 30, grabbing;
+}
+.egg__button,
+.breed__kid:not(:disabled) {
+  cursor: url('/game/cursor_point.png') 18 46, pointer;
+}
+.egg__hand {
+  left: auto;
+  margin-left: 0;
+}
+.close__cta {
+  position: relative;
+}
+.close__hand {
+  --hand: 64px;
+  width: 64px;
+  height: 64px;
+  background-size: 64px 256px;
+  left: auto;
+  right: -46px;
+  bottom: 30px;
+  margin-left: 0;
+}

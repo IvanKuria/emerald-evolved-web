@@ -28,7 +28,7 @@ and the registry's gallery; with `DEV_STORE=memory` they show only what you put 
 
 | Route | Job | What's on it |
 |---|---|---|
-| `/` | Make the idea land in five seconds, then get people to Play | Hero: a live population of real Eevee sprites splitting into two species, narrated by Emerald's own message box. Then the hook in the video's voice, the three rules as interactive demos, and a Play band with the live count. |
+| `/` | Make the idea land in five seconds, then get people to Play | Seven beats, each an event on screen with a caption of eight words or fewer (section 2a). No paragraphs: the explanations are on How it works. |
 | `/play` | Turn "I have a ROM" into "I'm playing" | Four visible steps (Your ROM, Checked, Patched, Playing), a drop zone where the game's window does the talking, the emulator, saves, touch controls. |
 | `/species` | The share loop: what players have made, and the way in for yours | The first species ever made in its own spot, "Register yours" (reads a save in the tab, finds lines that have split off, name one, card), the newest cards. |
 | `/species/:id` | The link people post | One card, Save image, Copy link, a way to Play. |
@@ -40,9 +40,40 @@ The navigation names things by what people do (Play, Species, Sandbox), not by h
 The live count lives in the nav on wide screens and in the Play band, and only once there is a real
 count with someone playing.
 
-The three rules on Home are numbered because they really are a sequence: mutation makes
-variation, selection keeps some of it, separation turns it into species. Nothing else on the site
-is numbered except the Play steps, which are also a sequence.
+### 2a. Home (v2, Nov 2026)
+
+Rebuilt after the owner rejected v1 (too much text, an uncreative composition, a weak sandbox
+showcase). The bar is frame-site's own home page, and its components are reused, adapted:
+`components/fancy/marquee-along-svg-path.tsx` and `simple-marquee.tsx` (fancycomponents, as frame
+carries them, plus a context so a belt item can read its place and the belt's velocity), `TextType`
+(plus `renderText`, so the game's message box draws what it types), `CountUp`, `Rise`, and the
+two easing tokens. Motion for entrances and belts, GSAP ScrollTrigger for the two pinned sections.
+
+1. **Hero** (`home/Hero.tsx`, `Arcs.tsx`, `Walker.tsx`, `Wordmark.tsx`): frame's two mirrored
+   arcs, geometry derived from the box (and, on a tall phone, the window's proportions). The belts
+   carry Eevee's follower sprite from pokeemerald-expansion, upright on the curve by its feet,
+   facing the way the belt runs and stepping with the distance covered (sAnim_Go*2F). Top: a wild
+   herd, each with its own genes. Bottom: genes as a function of place, so the line evolves as it
+   walks. Grab, flick, slows under the pointer. Hovering the wordmark runs the real hatch on its egg.
+2. **Every egg can mutate.** (`EggSection.tsx`, `hatch.ts`, `lib/front.ts`): egg_hatch.c frame by
+   frame, a mutant out of the ROM's palette function doing Eevee's real front animation, onto a
+   shelf. The PC's hand cursor bounces over the egg.
+3. **You choose who breeds.** (`Pedigree.tsx`): pinned and scrubbed; each generation a litter from
+   the kept one, under the PC's hand cursor (sAnim_Cursor_Bouncing / Open / Fist). Tap to keep.
+4. **Until they can't.** (`Split.tsx`): pinned; the real animated ocean between two banks, the Day
+   Care man's four lines typed into the message box as you reach them, the HP-colored bar, 2 species.
+5. **Play it in your browser.** (`PlayDevice.tsx`): a screen in a plain ink body; drop the ROM on
+   it. A game menu (standard window frame, ▶ cursor) offers the file picker or the test cartridge.
+   The boot capture is a marked PLACEHOLDER until the real one exists.
+6. **Name yours.** (`RegistryBelt.tsx`): real registry cards on a simple-marquee belt; with none,
+   the egg and "The first species goes here."
+7. **Close**: one line, one button, the hand pointing at it.
+
+Game UI is used as UI wherever it fits: the PC hand is the mouse cursor over things you can grab
+(open, then a fist) and press (pointing), the menu is the game's menu, the verdict is the game's
+message box. `scripts/record-home.mjs` records each section at desktop and phone for review.
+
+Nothing on the site is numbered except the Play steps, which really are a sequence.
 
 ## 2. Design decisions, and where each comes from
 
@@ -95,9 +126,10 @@ GBA assets. Not a shadcn template, not a dark gaming site.
   arrow nudging right; quiet sunk pill secondary.
 - **Code that explains itself.** Each component opens with a comment on why it is the shape it
   is, the way frame-site's are (OrbitCarousel, Spotlight, OneClip). Reviewers read code.
-- **One orchestrated motion.** frame-site's belts are the one thing that moves on their own; here
-  it's the population. Every other motion answers a person: hatch an egg, pick a parent, drop a
-  file, toggle a river.
+- **Motion that answers.** frame's belts move on their own because they are the content; here the
+  arcs do, and the egg hatches by itself only while it is on screen. Everything else is driven by
+  the reader: the pedigree and the split are scrubbed by the scroll and run backwards with it, the
+  belts are grabbed, the wordmark hatches under the pointer. One ease for all of it.
 - **Honesty in the interface.** frame-site's Spotlight refuses to fake search results; here the
   counter shows nothing until it has a real number, the Download button is disabled with a reason
   until the patch exists, and errors say which file is wrong and what to do.

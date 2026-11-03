@@ -16,6 +16,23 @@ export function How() {
 
       <div className="mt-20 grid grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="prose">
+          <h2 id="why">Evolution isn’t a cutscene</h2>
+          <p>
+            In Pokémon, your Eevee touches a stone and turns into a Vaporeon. Every Vaporeon that has ever existed looks
+            exactly the same.
+          </p>
+          <p>
+            Real evolution is slower and a lot weirder. Babies come out slightly wrong. The useful mistakes get passed on.
+            And if two groups are kept apart long enough, they stop being able to have babies together at all.
+          </p>
+          <p>
+            So I rewrote Pokémon Emerald so it works like that. The home page shows the three rules running; this page
+            explains them. Every egg can mutate: each gene copy has a small chance of changing when the egg is made, and
+            sometimes the baby comes out a different color. You choose who breeds: keep picking the biggest one and the
+            whole line grows, the same way people turned wolves into pugs. And two groups kept apart drift until the Day
+            Care won’t take them together. Nobody decides that’s a new species. It just happens.
+          </p>
+
           <h2 id="genes">Every Pokémon has genes now</h2>
           <p>
             In the original game a Pokémon’s stats are rolled once, at random, and that’s it. In this hack every Pokémon

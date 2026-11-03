@@ -1,266 +1,56 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { Sim, type SimEvent } from '../sim/engine'
-import { Field, type FieldHandle } from '../components/Field'
-import { DialogueBox } from '../components/DialogueBox'
-import { LivePlayers } from '../components/LivePlayers'
-import { MutationDemo } from '../components/MutationDemo'
-import { SelectionDemo } from '../components/SelectionDemo'
-import { Creature } from '../components/Creature'
-import { SplitReadout } from '../components/SplitReadout'
-import { DAYCARE_LINE, dayCare, type Score } from '../sim/daycare'
-import { SITE } from '../lib/site'
-import { useInView } from '../lib/useInView'
+import { Hero } from '../home/Hero'
+import { EggSection } from '../home/EggSection'
+import { Pedigree } from '../home/Pedigree'
+import { Split } from '../home/Split'
+import { PlayDevice } from '../home/PlayDevice'
+import { RegistryBelt } from '../home/RegistryBelt'
+import { Rise } from '../components/Rise'
+import '../home/home.css'
 
 /* ------------------------------------------------------------------
    Home.
 
-   The hero is the thing itself: one population of Eevee, running the
-   real rules (sim/engine.ts) with a river down the middle. In about
-   half a minute the two banks stop looking alike, the Day Care's
-   verdict on one from each side walks down its three lines, and then
-   they can't breed at all and the count turns to two. The headline is
-   the product's name, set like a thumbnail.
+   The one page that is not a document, built the way frame-site's is:
+   every beat is something happening on screen, and the copy is
+   captions. Seven beats:
 
-   This is the one piece of motion on the page that nobody asked for,
-   so it is the only one. Everything below it moves when touched.
+     the arcs       a wild herd and an evolving line, walking
+     the egg        a real hatch, a mutant, a growing shelf
+     the pedigree   you scroll the generations and pick who breeds
+     the split      two banks drift apart until the Day Care refuses
+     the screen     the game, and where your ROM goes
+     the registry   species players have actually named
+     the close      one line, one button
+
+   What each rule means, and the code behind it, lives on How it works.
+   This page only shows them working.
 ------------------------------------------------------------------ */
 
-/* Pre-run so the very first screen is already mid-story: the founders
-   have spread out and the colours have started to pull apart. Seed 42
-   at 56 creatures first splits at generation 46, so the split lands about
-   half a minute after the page opens. */
-const HERO = { seed: 42, pop: 56, mutation: 0.45, selection: 0.6, river: true, habitats: true }
-const WARM = 14
-const GEN_MS = 760
-
-const OPENING = 'Two groups of EEVEE live on either side of a river.'
-const NEW_SPECIES = 'The EEVEE across the river are a new species now.'
-
-function makeHero() {
-  const s = new Sim(HERO)
-  for (let i = 0; i < WARM; i++) s.step()
-  s.events = []
-  return s
-}
-
 export function Home() {
-  const sim = useRef<Sim>(makeHero())
-  const control = useRef<FieldHandle>({ genMs: GEN_MS, sprite: 0.24 })
-  const [line, setLine] = useState(OPENING)
-  const [gen, setGen] = useState(sim.current.gen)
-  const [dist, setDist] = useState(() => sim.current.crossDistance())
-  const [species, setSpecies] = useState(1)
-  const [breaking, setBreaking] = useState(false)
-  const [newDex, setNewDex] = useState<number | undefined>()
-  const lastScore = useRef<Score>(dayCare(sim.current.crossDistance(), false).score)
-  const timers = useRef<number[]>([])
-
-  useEffect(() => {
-    const narrow = () => (control.current.sprite = innerWidth < 640 ? 0.07 : 0.19)
-    narrow()
-    addEventListener('resize', narrow)
-    return () => {
-      removeEventListener('resize', narrow)
-      timers.current.forEach(clearTimeout)
-    }
-  }, [])
-
-  const onStep = useCallback((ev: SimEvent[]) => {
-    const s = sim.current
-    const d = s.crossDistance()
-    const n = s.livingSpecies().length
-    setGen(s.gen)
-    setDist(d)
-    for (const e of ev) {
-      if (e.kind === 'mutation' && n === 1)
-        setLine(e.coat > 0 ? 'A mutation! An EEVEE hatched with a greener coat.' : 'A mutation! An EEVEE hatched with a darker coat.')
-      if (e.kind === 'split' && s.species.size === 2) {
-        // the moment: the bar empties, the Day Care refuses, the field hops, then the count lands
-        control.current.pulse = performance.now()
-        setBreaking(true)
-        setNewDex(s.species.get(e.species)?.dex)
-        setLine(DAYCARE_LINE[0])
-        timers.current.push(
-          window.setTimeout(() => setBreaking(false), 1500),
-          window.setTimeout(() => setLine(NEW_SPECIES), 4200),
-        )
-      }
-    }
-    setSpecies(n)
-    if (n === 1) {
-      const { score } = dayCare(d, false)
-      if (score !== lastScore.current) {
-        lastScore.current = score
-        setLine(DAYCARE_LINE[score])
-      }
-    }
-    // after a long rest on two species, start a new valley
-    if (s.gen > 220) {
-      sim.current = makeHero()
-      control.current.pulse = 0
-      lastScore.current = dayCare(sim.current.crossDistance(), false).score
-      setSpecies(1)
-      setNewDex(undefined)
-      setDist(sim.current.crossDistance())
-      setLine(OPENING)
-    }
-  }, [])
-
   return (
     <>
-      <section className="relative pt-6 sm:pt-10" aria-labelledby="hero-title">
-        <h1 id="hero-title" className="display mx-auto max-w-[9ch] px-5 text-center text-banner md:max-w-none" style={{ animation: 'rise 900ms 120ms var(--ease-out) both' }}>
-          Emerald Evolved
-        </h1>
+      <Hero />
+      <EggSection />
+      <Pedigree />
+      <Split />
+      <PlayDevice />
+      <RegistryBelt />
 
-        <div className="relative mx-auto mt-4 max-w-[1500px]">
-          <Field
-            sim={sim}
-            control={control}
-            onStep={onStep}
-            className="block h-[min(56vh,480px)] w-full sm:h-[clamp(300px,48vh,540px)]"
-            label="A population of Eevee on two sides of a river, slowly changing color and size each generation until they split into two species."
-          />
-          <div className="pointer-events-none mx-auto flex max-w-[var(--page)] items-end justify-between gap-6 px-5 sm:px-8">
-            <span className="text-meta font-semibold text-ash tc">Generation {gen}</span>
-            <SplitReadout distance={dist} species={species} breaking={breaking} newDex={newDex} />
-          </div>
-        </div>
-
-        <div className="mx-auto mt-6 max-w-[760px] px-4">
-          <DialogueBox text={line} width={240} />
-        </div>
-
-        <div className="mt-9 flex flex-col items-center gap-6 px-5">
-          <p className="max-w-[40ch] text-center text-quiet leading-[1.45] text-ink-soft">
-            Pokémon Emerald with real evolution. Breed a line far enough and it becomes a species nobody has seen.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link to="/play" className="btn btn-ink">
-              Play in your browser
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M6 3.5L10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
-            {SITE.video ? (
-              <a href={SITE.video} className="btn btn-quiet">Watch the video</a>
-            ) : (
-              <Link to="/sandbox" className="btn btn-quiet">Try the sandbox</Link>
-            )}
-          </div>
-          <p className="text-center text-meta text-ash">Bring your own Pokémon Emerald. It never leaves your computer.</p>
-        </div>
-      </section>
-
-      <Hook />
-      <Rules />
-      <PlayBand />
-    </>
-  )
-}
-
-function Hook() {
-  return (
-    <section className="mx-auto mt-36 max-w-[var(--page)] px-5 sm:px-8">
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] md:gap-16">
-        <h2 className="display text-hero">Evolution isn’t a cutscene</h2>
-        <div className="max-w-[40ch] text-quiet leading-[1.5] text-ink-soft">
-          <p>
-            In Pokémon, your Eevee touches a stone and turns into a Vaporeon. Every Vaporeon that has ever existed looks
-            exactly the same.
-          </p>
-          <p className="mt-5">
-            Real evolution is slower and a lot weirder. Babies come out slightly wrong. The useful mistakes get passed
-            on. And if two groups are kept apart long enough, they stop being able to have babies together at all.
-          </p>
-          <p className="mt-5 text-ink">So I rewrote Pokémon Emerald so it works like that.</p>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function Rule({ n, title, children, demo }: { n: number; title: string; children: React.ReactNode; demo: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-16">
-      <div className="max-w-[44ch]">
-        <p className="display text-[4.5rem] leading-none text-ash-light tc" aria-hidden="true">{n}</p>
-        <h3 className="display mt-2 text-title">{title}</h3>
-        <div className="mt-4 text-lead leading-relaxed">{children}</div>
-      </div>
-      <div>{demo}</div>
-    </div>
-  )
-}
-
-function Rules() {
-  return (
-    <section className="mx-auto mt-40 flex max-w-[var(--page)] flex-col gap-32 px-5 sm:px-8" aria-label="The three rules">
-      <Rule
-        n={1}
-        title="Every egg is a little bit wrong"
-        demo={<MutationDemo />}
-      >
-        <p>
-          Each Pokémon carries two copies of every gene, one from each parent. When an egg is made, each copy has a small
-          chance of changing. Usually you can’t see it. Sometimes the baby comes out a different color.
-        </p>
-      </Rule>
-      <Rule n={2} title="You decide who has babies" demo={<SelectionDemo />}>
-        <p>
-          That’s selective breeding, the same thing that turned wolves into pugs. Keep picking the greenest one and
-          the whole line drifts green. In the game, the Day Care is where you do it.
-        </p>
-      </Rule>
-      <Rule n={3} title="Then they stop getting along" demo={<SpeciationDemo />}>
-        <p>
-          Two Pokémon can only breed if their genes are close enough. Keep two groups apart and they drift until the Day
-          Care won’t take them together. Nobody decides that’s a new species. It just happens, the way it does in real
-          life.
-        </p>
-      </Rule>
-    </section>
-  )
-}
-
-function SpeciationDemo() {
-  const [ref, seen] = useInView<HTMLDivElement>()
-  return (
-    <div ref={ref} className="rounded-card bg-paper-lift px-5 pt-8 pb-6 shadow-card sm:px-8">
-      <div className="flex items-end justify-center gap-6 sm:gap-14">
-        <Creature coat={0.5} mane={0.1} scale={2} label="A small green Eevee from the left bank" />
-        <Creature coat={-0.55} mane={-0.2} scale={3} flip label="A large dark Eevee from the right bank" />
-      </div>
-      <div className="mt-6">
-        <DialogueBox key={seen ? 'seen' : 'idle'} text={DAYCARE_LINE[0]} typing={seen} />
-      </div>
-      <p className="mt-4 text-center text-meta text-ash">That line is in the original game. Now it’s how you find out you made a new species.</p>
-    </div>
-  )
-}
-
-function PlayBand() {
-  return (
-    <section className="mx-auto mt-40 max-w-[var(--page)] px-5 sm:px-8">
-      <div className="flex flex-col items-start gap-8 rounded-card bg-paper-lift p-8 shadow-card sm:p-14 md:flex-row md:items-end md:justify-between">
-        <div className="max-w-[34rem]">
-          <h2 className="display text-hero">Play it in your browser</h2>
-          <p className="mt-4 text-lead text-ink-soft">
-            Drop in your own Emerald. It’s checked and patched right here in the tab, then it boots. Saves stay on this
-            device.
-          </p>
-        </div>
-        <div className="flex flex-col items-start gap-4 md:items-end">
+      {/* The close: one line and one button, as on frame. */}
+      <Rise as="section" className="close">
+        <h2 className="display max-w-[14ch] text-hero">Breed something nobody has seen.</h2>
+        <span className="close__cta">
           <Link to="/play" className="btn btn-ink">
-            Play now
+            Play
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M6 3.5L10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
-          <LivePlayers long className="text-meta font-semibold text-ink-soft" />
-        </div>
-      </div>
-    </section>
+          {/* the PC's hand, pointing at it */}
+          <span className="breed__hand px close__hand" data-frame={-1} aria-hidden="true" />
+        </span>
+      </Rise>
+    </>
   )
 }

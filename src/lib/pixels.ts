@@ -39,3 +39,17 @@ export const fitScale = (css: number, native: number, dpr: number, max = Infinit
 
 /** CSS length of `n` game pixels at `k` device pixels each. */
 export const cssPx = (n: number, k: number, dpr: number) => (n * k) / dpr
+
+/** The width of an element, kept current: layout derives from the box it has, not the window. */
+export function useBoxWidth<T extends HTMLElement>(fallback = 1200) {
+  const [el, setEl] = useState<T | null>(null)
+  const [w, setW] = useState(fallback)
+  useEffect(() => {
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setW(Math.round(e.contentRect.width)))
+    ro.observe(el)
+    setW(el.clientWidth)
+    return () => ro.disconnect()
+  }, [el])
+  return [setEl, w] as const
+}

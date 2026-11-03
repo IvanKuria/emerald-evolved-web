@@ -1,0 +1,146 @@
+/* ------------------------------------------------------------------
+   The hero band: frame-site's hero.css and orbit.css, carried over with
+   the plates swapped for walkers.
+
+   Component CSS rather than utilities, and only here, for frame's
+   reason: the arcs need `offset-path`, an oversized mask box and
+   keyframes that no utility has. Everything else on the page is
+   Tailwind.
+------------------------------------------------------------------ */
+
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: min(900px, calc(100dvh - 68px));
+  overflow-x: clip;
+}
+
+.hero__lens {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 20px 24px;
+  position: relative;
+  z-index: 2;
+  /* the lens never takes the pointer from a belt it overlaps, except where it has something to press */
+  pointer-events: none;
+  animation: hero-in 880ms 240ms var(--ease-out) both;
+}
+.hero__lens > * {
+  pointer-events: auto;
+}
+
+.hero__line {
+  font-size: var(--t-quiet);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--ash);
+  text-wrap: balance;
+}
+
+.hero__cta {
+  margin-top: 14px;
+}
+
+.hero__foot {
+  margin-top: 2px;
+  font-size: var(--t-meta);
+  color: var(--ash-light);
+}
+
+/* ---- the wordmark ---- */
+
+.wordmark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0.2em;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wordmark__egg {
+  position: relative;
+  flex: none;
+  /* the egg's base sits on the letters' baseline, a touch under it like a thing standing on a line */
+  margin-bottom: 0.06em;
+  filter: drop-shadow(0.06em 0.09em 0.07em rgba(40, 30, 20, 0.26));
+}
+.wordmark__egg canvas {
+  position: absolute;
+  pointer-events: none;
+}
+
+.wordmark__word {
+  font-family: var(--font-display);
+  font-size: clamp(3.4rem, 1.2rem + 7.4vw, 8.4rem);
+  line-height: 0.82;
+  letter-spacing: 0.004em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- the arcs (frame's orbit.css) ---- */
+
+.arc {
+  position: relative;
+  width: 100%;
+  flex: none;
+  /* Not overflow hidden: a walker at the crest is taller than its band.
+     Softened at the window edge instead of cut, with the mask box four
+     times the band so it never clips what the missing overflow rule
+     protects. */
+  touch-action: pan-y;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--arc-fade, 110px), #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--arc-fade, 110px), #000 100%);
+  -webkit-mask-size: 100% 400%;
+  mask-size: 100% 400%;
+  -webkit-mask-position: 0 0;
+  mask-position: 0 0;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.arc--up {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 var(--arc-fade, 110px), #000 100%);
+  mask-image: linear-gradient(to top, transparent 0, #000 var(--arc-fade, 110px), #000 100%);
+  -webkit-mask-position: 0 100%;
+  mask-position: 0 100%;
+}
+
+.arc__track {
+  position: absolute;
+  inset: 0;
+}
+
+.arc__walker {
+  animation: walker-in 820ms var(--ease-out) both;
+}
+
+@keyframes walker-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__lens,
+  .arc__walker {
+    animation: none;
+  }
+}
+
+@media (max-height: 720px) {
+  .hero {
+    min-height: 680px;
+  }
+}

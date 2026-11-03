@@ -375,3 +375,12 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .live-dot { animation: none; }
 }
+
+/* The game's standard window frame (graphics/text_window/1.png, frame type 1), nine-sliced at two
+   CSS pixels per game pixel, its white middle as the fill. For panels that are the game's menus. */
+.game-window {
+  border: 16px solid transparent;
+  border-image: url('/game/window_frame.png') 8 fill / 16px / 0 round;
+  image-rendering: pixelated;
+  filter: drop-shadow(4px 7px 6px rgba(40, 30, 20, 0.18));
+}

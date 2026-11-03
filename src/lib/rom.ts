@@ -122,3 +122,14 @@ export function patchAvailable(t: PatchTarget = EMERALD): Promise<boolean> {
     .catch(() => false)
   return available
 }
+
+/* A ROM dropped on the home page's device, handed to /play in memory only, the way the registry
+   takes a save from Play (registry/client.ts handSave). Never stored, never sent. */
+let handed: File | 'test' | null = null
+/** A file, or 'test' for the site's own test cartridge. */
+export const handRom = (f: File | 'test') => void (handed = f)
+export const takeRom = () => {
+  const f = handed
+  handed = null
+  return f
+}

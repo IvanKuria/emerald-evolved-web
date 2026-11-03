@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { applyBps, BpsError } from '../lib/bps'
 import { sha1Hex } from '../lib/sha1'
-import { EMERALD, TEST_CART, judge, patchAvailable, type PatchTarget } from '../lib/rom'
+import { EMERALD, TEST_CART, judge, patchAvailable, takeRom, type PatchTarget } from '../lib/rom'
 import { bootCore, download, forgetGame, hasGame, isolationProblem, storeGame, type Emulator } from '../lib/emulator'
 import { setPlaying } from '../lib/presence'
 import { DialogueBox } from '../components/DialogueBox'
@@ -172,6 +172,14 @@ export function Play() {
     const r = await fetch('/test/evotest.gba')
     take(new Uint8Array(await r.arrayBuffer()), TEST_CART)
   }
+
+  // a ROM dropped on the home page's device (or its menu's test cartridge) arrives here and goes straight in
+  useEffect(() => {
+    const f = takeRom()
+    if (f === 'test') tryTest()
+    else if (f) take(f, EMERALD)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [take])
 
   const onFiles = (files: FileList | null) => {
     const f = files?.[0]

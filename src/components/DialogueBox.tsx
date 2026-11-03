@@ -75,12 +75,16 @@ export function DialogueBox({
   typing = true,
   className = '',
   onDone,
+  chars,
 }: {
   text: string
   width?: number
   typing?: boolean
   className?: string
   onDone?: () => void
+  /** Show only the first `chars` characters of `text`, laid out where the whole text puts them.
+   *  For a caller that does its own typing (TextType); the box then never types by itself. */
+  chars?: number
 }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -88,6 +92,8 @@ export function DialogueBox({
   const [lay, setLay] = useState({ s: 3, w: width })
   const doneRef = useRef(onDone)
   doneRef.current = onDone
+  const charsRef = useRef(chars)
+  charsRef.current = chars
 
   useEffect(() => {
     const el = wrapRef.current
@@ -123,10 +129,20 @@ export function DialogueBox({
       let start = performance.now()
       let doneAt = 0
       let reported = false
+      const len = (p: string[]) => p.reduce((a, l) => a + [...l].length, 0)
       const frame = (t: number) => {
+        const given = charsRef.current
+        if (given !== undefined) {
+          // the caller types: find the page its count has reached
+          page = 0
+          let before = 0
+          while (page < pages.length - 1 && given > before + len(pages[page])) before += len(pages[page++])
+          start = t - ((given - before) / CPS) * 1000
+        }
         const cur = pages[page]
-        const total = cur.reduce((a, l) => a + [...l].length, 0)
-        const shown = !typing || reduce ? total : Math.floor(((t - start) / 1000) * CPS)
+        const total = len(cur)
+        const shown =
+          given !== undefined ? Math.max(0, given - pages.slice(0, page).reduce((a, p) => a + len(p), 0)) : !typing || reduce ? total : Math.floor(((t - start) / 1000) * CPS)
         ctx.clearRect(0, 0, W, BOX_H)
         drawFrame(ctx, box, W)
         let left = shown
@@ -137,7 +153,7 @@ export function DialogueBox({
         if (shown >= total) {
           doneAt ||= t
           const f = Math.floor(t / 130) % ARROW_FRAMES
-          if (page < pages.length - 1) {
+          if (page < pages.length - 1 && given === undefined) {
             ctx.drawImage(arrow, 0, f * 12, 8, 12, W - 18, 27, 8, 12)
             if (t - doneAt > PAGE_HOLD) {
               page++
