@@ -9,6 +9,7 @@ public/mgba
 dev-start.cmd
 dev.log
 public/patch/*.bps
+!public/patch/upgrade-*.bps
 
 .env
 .env.*

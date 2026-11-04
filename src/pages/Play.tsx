@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { applyBps, BpsError } from '../lib/bps'
 import { sha1Hex } from '../lib/sha1'
 import { EMERALD, TEST_CART, judge, patchAvailable, takeRom, type PatchTarget } from '../lib/rom'
-import { bootCore, download, forgetGame, hasGame, isolationProblem, storeGame, type Emulator } from '../lib/emulator'
+import { bootCore, download, forgetGame, gamePath, hasGame, isolationProblem, storeGame, type Emulator } from '../lib/emulator'
 import { setPlaying } from '../lib/presence'
 import { DialogueBox } from '../components/DialogueBox'
 import { HpBar } from '../components/HpBar'
@@ -64,6 +64,25 @@ function stepOf(p: Phase): number {
   }
 }
 
+/* A game stored by an older release is brought up to date in place before it boots (the save file is separate and
+   its format is unchanged). If anything goes wrong the stored game is left as it was. */
+async function upgradeStored(e: Emulator, t: PatchTarget) {
+  if (!t.upgrades?.length || !t.targetSha1) return
+  try {
+    const cur = e.FS.readFile(gamePath(e, t.outName)) as Uint8Array
+    const sha = await sha1Hex(cur)
+    if (sha === t.targetSha1) return
+    const up = t.upgrades.find((u) => u.fromSha1 === sha)
+    if (!up) return
+    const res = await fetch(up.url)
+    if (!res.ok) return
+    const out = applyBps(cur, new Uint8Array(await res.arrayBuffer()))
+    if ((await sha1Hex(out)) === t.targetSha1) await storeGame(e, t.outName, out)
+  } catch (err) {
+    console.warn('stored game upgrade skipped', err)
+  }
+}
+
 export function Play() {
   const [phase, setPhase] = useState<Phase>({ at: 'drop' })
   const [target, setTarget] = useState<PatchTarget>(EMERALD)
@@ -98,6 +117,7 @@ export function Play() {
       const e = await bootCore(canvas.current!)
       if (rom) await storeGame(e, t.outName, rom)
       else if (!hasGame(e, t.outName)) throw new Error('missing')
+      else await upgradeStored(e, t)
       if (!e.loadGame(`${e.filePaths().gamePath}/${t.outName}`)) throw new Error('load')
       e.resumeAudio()
       localStorage.setItem(LAST, t.outName)

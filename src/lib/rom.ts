@@ -18,6 +18,8 @@ export interface PatchTarget {
   /** Name for the patched file if the player downloads it for a desktop emulator. */
   outName: string
   version: string
+  /** Small patches that bring a game stored by an older release up to this one (Continue never sees the base ROM again). */
+  upgrades?: { fromSha1: string; url: string }[]
 }
 
 /* Pokémon Emerald (USA, Europe), the one retail revision. Cross-checked
@@ -29,12 +31,14 @@ export const EMERALD: PatchTarget = {
   baseName: 'Pokémon Emerald (US)',
   sourceSha1: 'f3ae088181bf583e55daf962a92bb46f4f1d07b7',
   // BUILD_STATUS.md "Release artefacts": vanilla + patch == release ROM, byte for byte
-  targetSha1: 'b833daac0573f700ec634b946cbdf55253739755',
-  patchSha1: '6bda9a1e269c1812867294633ee174e103d61152',
-  patchSize: 24_555_892,
+  // v1.0.1: trainers no longer Dynamax / Terastallize (their "don't" markers live in genome bits)
+  targetSha1: '2e6997928f4186bc3debbf7bf3019455699861ca',
+  patchSha1: 'bbfcc8433c93dd884420a5925f8f82bdda8cd9a1',
+  patchSize: 24_554_674,
   patchUrl: '/patch/emerald-evolved.bps',
   outName: 'emerald-evolved.gba',
-  version: 'v1.0',
+  version: 'v1.0.1',
+  upgrades: [{ fromSha1: 'b833daac0573f700ec634b946cbdf55253739755', url: '/patch/upgrade-1.0.0-to-1.0.1.bps' }],
 }
 
 /* The homebrew test cartridge in /testrom (ours, CC0). It exists so the
