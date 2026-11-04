@@ -213,7 +213,7 @@ export function Sandbox() {
   return (
     <div className="sbx">
       <Rise className="sbx__head">
-        <h1 className="display text-hero">Make a new species.</h1>
+        <h1 className="display text-hero">Make real evolution happen.</h1>
         <p className="sbx__honest">
           A simulation of the game’s breeding rules. The real thing is the game. <Link to="/play">Play it</Link>
         </p>

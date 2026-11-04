@@ -52,7 +52,7 @@ export async function cardImage(card: CardData, url: string): Promise<Blob | nul
   const X = 560
   ctx.fillStyle = '#6c675e'
   ctx.font = '400 34px "Bebas Neue"'
-  ctx.fillText(card.no === 1 ? 'THE FIRST NEW SPECIES' : card.no ? `NEW SPECIES NO.${card.no}` : 'NEW SPECIES', X, 112)
+  ctx.fillText(card.no === 1 ? 'THE FIRST REAL EVOLUTION' : card.no ? `REAL EVOLUTION NO.${card.no}` : 'REAL EVOLUTION', X, 112)
   ctx.fillStyle = '#151515'
   let size = 136
   ctx.font = `400 ${size}px "Bebas Neue"`

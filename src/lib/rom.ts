@@ -32,13 +32,17 @@ export const EMERALD: PatchTarget = {
   sourceSha1: 'f3ae088181bf583e55daf962a92bb46f4f1d07b7',
   // BUILD_STATUS.md "Release artefacts": vanilla + patch == release ROM, byte for byte
   // v1.0.1: trainers no longer Dynamax / Terastallize (their "don't" markers live in genome bits)
-  targetSha1: '2e6997928f4186bc3debbf7bf3019455699861ca',
-  patchSha1: 'bbfcc8433c93dd884420a5925f8f82bdda8cd9a1',
-  patchSize: 24_554_674,
+  // v1.0.2: genetic sizes drawn at clean pixel steps (1x, 1.33x, 1.6x, 2x)
+  targetSha1: 'bbf39cba342b4b4edae2b0f40661bf3fa3dbfb67',
+  patchSha1: '60c1b7cffa3b8430b42eec1b834d405b779afbff',
+  patchSize: 24_554_576,
   patchUrl: '/patch/emerald-evolved.bps',
   outName: 'emerald-evolved.gba',
-  version: 'v1.0.1',
-  upgrades: [{ fromSha1: 'b833daac0573f700ec634b946cbdf55253739755', url: '/patch/upgrade-1.0.0-to-1.0.1.bps' }],
+  version: 'v1.0.2',
+  upgrades: [
+    { fromSha1: 'b833daac0573f700ec634b946cbdf55253739755', url: '/patch/upgrade-1.0.0-to-1.0.2.bps' },
+    { fromSha1: '2e6997928f4186bc3debbf7bf3019455699861ca', url: '/patch/upgrade-1.0.1-to-1.0.2.bps' },
+  ],
 }
 
 /* The homebrew test cartridge in /testrom (ours, CC0). It exists so the

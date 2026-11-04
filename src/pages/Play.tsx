@@ -415,6 +415,27 @@ function Toolbar({
   const navigate = useNavigate()
   const [paused, setPaused] = useState(false)
   const [muted, setMuted] = useState(false)
+  // fast-forward: the button cycles x1/x2/x4 (works on phones); holding Space doubles it (x2 from x1, up to x8)
+  const [speed, setSpeed] = useState(1)
+  useEffect(() => {
+    emu.setFastForwardMultiplier(speed)
+    const typing = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))
+    const down = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || typing(e.target)) return
+      e.preventDefault()   // Space would scroll the page
+      if (!e.repeat) emu.setFastForwardMultiplier(Math.min(8, speed * 2 < 2 ? 2 : speed * 2))
+    }
+    const up = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !typing(e.target)) emu.setFastForwardMultiplier(speed)
+    }
+    addEventListener('keydown', down)
+    addEventListener('keyup', up)
+    return () => {
+      removeEventListener('keydown', down)
+      removeEventListener('keyup', up)
+    }
+  }, [emu, speed])
+  useEffect(() => () => emu.setFastForwardMultiplier(1), [emu])
   const saveIn = useRef<HTMLInputElement>(null)
   const base = target.outName.replace(/\.gba$/, '')
   return (
@@ -427,6 +448,9 @@ function Toolbar({
           </button>
           <button className="btn btn-quiet btn-sm" onClick={() => { emu.setVolume(muted ? 100 : 0); setMuted(!muted) }}>
             {muted ? 'Sound on' : 'Mute'}
+          </button>
+          <button className="btn btn-quiet btn-sm" aria-label={`Game speed ${speed} times. Press to change.`} onClick={() => setSpeed((s) => (s === 1 ? 2 : s === 2 ? 4 : 1))}>
+            Speed ×{speed}
           </button>
           <button className="btn btn-quiet btn-sm" onClick={() => stage.current?.requestFullscreen?.()}>
             Full screen
@@ -441,6 +465,7 @@ function Toolbar({
           <dt className="font-semibold text-ink-soft">A / S</dt><dd>L / R</dd>
           <dt className="font-semibold text-ink-soft">Enter</dt><dd>Start</dd>
           <dt className="font-semibold text-ink-soft">Backspace</dt><dd>Select</dd>
+          <dt className="font-semibold text-ink-soft">Space (hold)</dt><dd>Fast forward</dd>
         </dl>
       </div>
       <div>

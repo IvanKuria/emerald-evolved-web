@@ -101,7 +101,7 @@ export function Reveal({
       {step !== 'card' && (
         <>
           <canvas ref={ref} className="px reveal__mon" style={{ width: 96 * u, height: 96 * u }} role="img" aria-label="Your new species" />
-          <p className="display reveal__title">A new species.</p>
+          <p className="display reveal__title">Real evolution.</p>
           <p className="text-lead text-ink-soft">It can’t breed with wild Eevee any more. Generation {gen}.</p>
         </>
       )}

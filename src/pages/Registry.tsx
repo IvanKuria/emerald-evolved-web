@@ -85,13 +85,13 @@ function FirstSpot({ listing }: { listing: Listing | null | 'loading' }) {
   if (listing !== 'loading' && listing?.first)
     return (
       <section aria-labelledby="first">
-        <h2 id="first" className="mb-3 text-body font-bold text-sprout-ink">The first new species ever made</h2>
+        <h2 id="first" className="mb-3 text-body font-bold text-sprout-ink">The first real evolution ever made</h2>
         <SpeciesCard card={listing.first} size="hero" />
       </section>
     )
   return (
     <section aria-labelledby="first" className="flex flex-col">
-      <h2 id="first" className="mb-3 text-body font-bold text-ink">The first new species ever made</h2>
+      <h2 id="first" className="mb-3 text-body font-bold text-ink">The first real evolution ever made</h2>
       <div className="flex flex-1 flex-col items-center justify-center gap-6 rounded-card bg-paper-sink px-8 py-14 text-center">
         <Egg />
         <div className="max-w-[34ch]">
@@ -191,7 +191,7 @@ function Found({ step, onPick, onAgain }: { step: Extract<Step, { at: 'read' }>;
   const score = best ? scoreVsWild(best.genome).score : 70
   return (
     <div className="mt-7">
-      <p className="display text-[2rem] leading-[0.95] text-ink">No new species in this save yet</p>
+      <p className="display text-[2rem] leading-[0.95] text-ink">No real evolution in this save yet</p>
       <p className="mt-3 text-body text-ink-soft">
         {best ? (
           <>
@@ -271,7 +271,7 @@ function Done({ card, first }: { card: Card; first: boolean }) {
   return (
     <div className="mt-7 flex flex-col gap-5">
       <p className="display text-[2.2rem] leading-[0.92] text-sprout-ink" style={{ animation: 'drop-in 620ms var(--ease-spring) both' }}>
-        {first ? 'The first new species ever made' : `New species No.${card.no}`}
+        {first ? 'The first real evolution ever made' : `Real evolution No.${card.no}`}
       </p>
       <SpeciesCard card={card} />
       <div className="flex flex-wrap gap-3">
@@ -318,7 +318,7 @@ export function SpeciesPage() {
       ) : (
         <>
           <h1 className="sr-only">{card.name}</h1>
-          {card.no === 1 && <p className="mt-6 text-body font-bold text-sprout-ink">The first new species ever made</p>}
+          {card.no === 1 && <p className="mt-6 text-body font-bold text-sprout-ink">The first real evolution ever made</p>}
           <div className="mt-3">
             <SpeciesCard card={card} size="hero" link={false} />
           </div>
