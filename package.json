@@ -18,6 +18,7 @@
     "@fontsource/bebas-neue": "^5.3.0",
     "@gsap/react": "^2.1.2",
     "@thenick775/mgba-wasm": "2.6.0",
+    "@vercel/analytics": "^2.0.1",
     "gsap": "^3.15.0",
     "motion": "^13.1.1",
     "react": "^19.3.1",

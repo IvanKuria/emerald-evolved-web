@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Analytics } from '@vercel/analytics/react'
 import { createBrowserRouter, RouterProvider, Outlet, ScrollRestoration } from 'react-router'
 import { Nav } from './components/Nav'
 import { Footer } from './components/Footer'
@@ -48,5 +49,6 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RouterProvider router={router} />
+    <Analytics />
   </StrictMode>,
 )
