@@ -118,7 +118,13 @@ let available: Promise<boolean> | null = null
 export function patchAvailable(t: PatchTarget = EMERALD): Promise<boolean> {
   if (t !== EMERALD) return Promise.resolve(true)
   available ??= fetch(t.patchUrl, { method: 'HEAD' })
-    .then((r) => r.ok && Number(r.headers.get('content-length')) === t.patchSize)
+    // Vercel serves the patch brotli-compressed to browsers, with no content-length, so only a 200 is
+    // required here; the patched ROM's SHA-1 is checked after patching anyway.
+    .then((r) => {
+      if (!r.ok) return false
+      const len = r.headers.get('content-length')
+      return r.headers.has('content-encoding') || !len || Number(len) === t.patchSize
+    })
     .catch(() => false)
   return available
 }
