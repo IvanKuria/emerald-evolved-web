@@ -44,8 +44,12 @@
   text-wrap: balance;
 }
 
-.hero__cta {
+.hero__actions {
   margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 }
 
 .hero__foot {

@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { Arc } from './Arcs'
 import { Wordmark } from './Wordmark'
+import { GitHubStar } from '../components/GitHubStar'
 import { useEffect, useState } from 'react'
 
 /* ------------------------------------------------------------------
@@ -38,12 +39,15 @@ export function Hero() {
           <Wordmark eggScale={egg} />
         </h1>
         <p className="hero__line">Pokémon that actually evolve.</p>
-        <Link to="/play" className="btn btn-ink hero__cta">
-          Play
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M6 3.5L10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
+        <div className="hero__actions">
+          <Link to="/play" className="btn btn-ink">
+            Play
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M6 3.5L10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+          <GitHubStar />
+        </div>
         <p className="hero__foot">In your browser. Bring your own Emerald.</p>
       </div>
 
