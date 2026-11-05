@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Link } from 'react-router'
-import { LivePlayers } from './LivePlayers'
 import { Logo } from './Logo'
 
 /* No rule under the bar. It sits on the page, and only once the page
@@ -55,9 +54,6 @@ export function Nav() {
             </NavLink>
           ))}
         </div>
-        <span className="hidden lg:block">
-          <LivePlayers className="text-meta font-semibold text-ink-soft" />
-        </span>
 
         <button
           className="ml-auto grid h-10 w-10 place-items-center rounded-pill text-ink md:hidden"
@@ -79,7 +75,6 @@ export function Nav() {
               </NavLink>
             ))}
           </div>
-          <LivePlayers long className="mt-4 text-meta font-semibold text-ink-soft" />
         </div>
       )}
     </header>

@@ -3,7 +3,6 @@ import { applyBps, BpsError } from '../lib/bps'
 import { sha1Hex } from '../lib/sha1'
 import { EMERALD, TEST_CART, judge, patchAvailable, takeRom, type PatchTarget } from '../lib/rom'
 import { bootCore, download, forgetGame, gamePath, hasGame, isolationProblem, storeGame, type Emulator } from '../lib/emulator'
-import { setPlaying } from '../lib/presence'
 import { DialogueBox } from '../components/DialogueBox'
 import { HpBar } from '../components/HpBar'
 import { TouchPad } from '../components/TouchPad'
@@ -108,8 +107,6 @@ export function Play() {
     return () => ro.disconnect()
   }, [dpr])
 
-  useEffect(() => () => setPlaying(false), [])
-
   const boot = useCallback(async (rom: Uint8Array | null, t: PatchTarget) => {
     setTarget(t)
     setPhase({ at: 'booting' })
@@ -124,7 +121,6 @@ export function Play() {
       setLast(t.outName)
       setEmu(e)
       setPhase({ at: 'playing' })
-      setPlaying(true)
       canvas.current?.focus({ preventScroll: true })
       // on a phone the screen and the touch controls only fit together once the page is scrolled to them
       if (innerWidth < 1024) requestAnimationFrame(() => stage.current?.scrollIntoView({ block: 'start' }))
@@ -316,7 +312,6 @@ export function Play() {
               emu.quitGame()
               localStorage.removeItem(LAST)
               setLast(null)
-              setPlaying(false)
               setPhase({ at: 'drop' })
             }} />
           ) : (

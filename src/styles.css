@@ -41,8 +41,7 @@
   /* --- The one ink -------------------------------------------- */
   /* The HP bar's green, read straight off hpbar_green_8.png
      (90, 214, 132). It is the colour the game uses for "alive", and
-     this site uses it for the same thing only: the live counter, the
-     current generation, a check that passed. Never for a paragraph. */
+     this site uses it for the same thing only: the current generation, a check that passed. Never for a paragraph. */
   --sprout: #5ad684;
   /* The bar's own dark edge, deepened until text passes AA (5.3:1). */
   --sprout-ink: #1c7043;

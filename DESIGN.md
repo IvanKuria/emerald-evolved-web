@@ -37,9 +37,6 @@ and the registry's gallery; with `DEV_STORE=memory` they show only what you put 
 | `/download` | For desktop emulators and flash carts | The .bps, GitHub, checksums, how to patch by hand. |
 
 The navigation names things by what people do (Play, Species, Sandbox), not by how they are built.
-The live count lives in the nav on wide screens and in the Play band, and only once there is a real
-count with someone playing.
-
 ### 2a. Home (v2, Nov 2026)
 
 Rebuilt after the owner rejected v1 (too much text, an uncreative composition, a weak sandbox
@@ -291,7 +288,7 @@ events with capture so a sliding thumb still releases.
 
 ### Shape
 
-- `api/presence/index.ts`, `api/presence/leave.ts`, `api/registry/index.ts`, `api/registry/[id].ts`
+- `api/registry/index.ts`, `api/registry/[id].ts`
   are Vercel Functions (web `Request`/`Response` handlers). They hold no logic of their own.
 - `server/store.ts` is the only code that touches storage: a handful of Redis commands behind one
   interface. Implementations: Upstash Redis over its REST API (plain `fetch`, no SDK) and memory
@@ -301,16 +298,6 @@ events with capture so a sliding thumb still releases.
   code that deploys.
 - `vercel.json` sets COOP/COEP on every response (the emulator's threads need cross-origin
   isolation), long caching on `/mgba` and `/game`, and rewrites every non-API route to the app.
-
-### The live counter (`server/presence.ts`, `src/lib/presence.ts`)
-
-- Each tab makes up a random id kept in sessionStorage. No cookie, no IP stored, nothing that
-  outlives the tab.
-- Every 25 seconds while visible, the tab POSTs `{sid, playing}`; the reply is the count. On
-  `pagehide` a beacon says goodbye. Anyone silent for 70 seconds stops counting.
-- Storage: two sorted sets scored by last-seen time, trimmed on every beat.
-- The UI shows nothing until it has a real count, and nothing while nobody is playing. On a 503
-  the client stops asking.
 
 ### The Species Registry
 
@@ -397,7 +384,6 @@ physical phone.
 | BPS patcher | Working, tested against Flips both ways |
 | mGBA boot, keyboard, touch controls, pause, mute, full screen | Working (test cartridge; touch checked in WebKit/iPhone and Chromium/Android profiles) |
 | Saves to IndexedDB, export, import, continue after reload, forget | Working (test cartridge) |
-| Live counter | Working against the memory store; Vercel functions written, not deployed (no keys yet) |
 | Species Registry: save reading, card, image, gallery, abuse guards | Working against the ROM's own saves and the memory store; not deployed (no keys yet) |
 | The real `emerald-evolved.bps` | Built (BUILD_STATUS.md). Served from `public/patch/` once `PATCH_URL` is set at build time; checked end to end with a retail ROM on the PC |
 | Video link, final GitHub repo name, domain | Placeholders in `src/lib/site.ts` |

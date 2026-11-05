@@ -3,17 +3,13 @@ import type { Plugin, ViteDevServer } from 'vite'
 /* ------------------------------------------------------------------
    The dev server runs the real Vercel functions in api/, so local
    development exercises the same code that deploys. A request to
-   /api/presence/leave is served by api/presence/leave.ts, /api/registry
-   by api/registry/index.ts, /api/registry/abc by api/registry/[id].ts.
+   /api/registry is served by api/registry/index.ts, /api/registry/abc by api/registry/[id].ts.
 
    Storage follows the same rule as production: none unless configured.
-   DEV_STORE=memory gives an in-memory store for trying the counter and
-   the registry locally (it holds only what you put in it).
+   DEV_STORE=memory gives an in-memory store for trying the registry locally (it holds only what you put in it).
 ------------------------------------------------------------------ */
 
 const ROUTES: [RegExp, string][] = [
-  [/^\/api\/presence\/leave$/, '/api/presence/leave.ts'],
-  [/^\/api\/presence$/, '/api/presence/index.ts'],
   [/^\/api\/registry$/, '/api/registry/index.ts'],
   [/^\/api\/registry\/[^/]+$/, '/api/registry/[id].ts'],
 ]

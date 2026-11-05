@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { memoryStore } from '../server/store'
 import { submit, list, one } from '../server/registry'
-import { beat, leave } from '../server/presence'
 import { pack } from '../src/save/genome'
 import { toHex } from '../src/registry/card'
 import { NEW_SPECIES, ALMOST } from './fixtures/build-save'
@@ -37,17 +36,5 @@ describe('registry server', () => {
     for (let i = 0; i < 7; i++) codes.push((await submit(s, sub(10 + i), '9.9.9.9')).status)
     expect(codes).toEqual([201, 201, 201, 201, 201, 429, 429])
     expect((await submit(s, sub(20), '8.8.8.8')).status).toBe(201)
-  })
-})
-
-describe('presence', () => {
-  it('counts tabs and players, forgets the silent and the departed', async () => {
-    const s = memoryStore(true)
-    await beat(s, { sid: 'aaaaaaaa1', playing: true }, 1000)
-    await beat(s, { sid: 'bbbbbbbb2', playing: false }, 1000)
-    expect(await beat(s, { sid: 'x' }, 2000)).toEqual({ here: 2, playing: 1 })
-    await leave(s, { sid: 'aaaaaaaa1' })
-    expect(await beat(s, {}, 3000)).toEqual({ here: 1, playing: 0 })
-    expect(await beat(s, {}, 1000 + 71_000)).toEqual({ here: 0, playing: 0 })
   })
 })
