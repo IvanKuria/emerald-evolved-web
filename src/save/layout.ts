@@ -152,8 +152,9 @@ export const G = {
 
 export const HUE_STEP = 48 // hue units per allele step; 1536 units = 360 degrees
 
-/* The generation counter: a 16-bit value in nickname characters 11-12
-   (MON_DATA_GENERATION). Wild Pokémon are 0; an egg is max(parents) + 1.
-   A save from before the hack can hold end-of-string padding there
+/* The generation counter: nickname character 11 (MON_DATA_GENERATION),
+   0-255. Wild Pokémon are 0; an egg is max(parents) + 1. Since v1.1.0
+   character 12 holds part of a hybrid's lineage, so it is not part of the
+   count. A save from before the hack can hold end-of-string padding there
    (0xFF), which is treated as unknown. */
-export const GENERATION = { lo: 'nickname11', hi: 'nickname12', unset: 0xff00 } as const
+export const GENERATION = { field: 'nickname11', unset: 0xff } as const

@@ -33,15 +33,17 @@ export const EMERALD: PatchTarget = {
   // BUILD_STATUS.md "Release artefacts": vanilla + patch == release ROM, byte for byte
   // v1.0.1: trainers no longer Dynamax / Terastallize (their "don't" markers live in genome bits)
   // v1.0.2: genetic sizes drawn at clean pixel steps (1x, 1.33x, 1.6x, 2x)
-  targetSha1: 'bbf39cba342b4b4edae2b0f40661bf3fa3dbfb67',
-  patchSha1: '60c1b7cffa3b8430b42eec1b834d405b779afbff',
-  patchSize: 24_554_576,
+  // v1.1.0: cross-breeding (hybrid eggs, chromosomes, sterile hybrids, wild hybrids), Breeder start, v1.0.3 fixes
+  targetSha1: '0b4dfca922c29f6211908d69d8c88a6c433d00e0',
+  patchSha1: 'de96b62072490a9bf827fc048c60baa6cb77e9eb',
+  patchSize: 24_567_058,
   patchUrl: '/patch/emerald-evolved.bps',
   outName: 'emerald-evolved.gba',
-  version: 'v1.0.2',
+  version: 'v1.1.0',
   upgrades: [
-    { fromSha1: 'b833daac0573f700ec634b946cbdf55253739755', url: '/patch/upgrade-1.0.0-to-1.0.2.bps' },
-    { fromSha1: '2e6997928f4186bc3debbf7bf3019455699861ca', url: '/patch/upgrade-1.0.1-to-1.0.2.bps' },
+    { fromSha1: 'b833daac0573f700ec634b946cbdf55253739755', url: '/patch/upgrade-1.0.0-to-1.1.0.bps' },
+    { fromSha1: '2e6997928f4186bc3debbf7bf3019455699861ca', url: '/patch/upgrade-1.0.1-to-1.1.0.bps' },
+    { fromSha1: 'bbf39cba342b4b4edae2b0f40661bf3fa3dbfb67', url: '/patch/upgrade-1.0.2-to-1.1.0.bps' },
   ],
 }
 

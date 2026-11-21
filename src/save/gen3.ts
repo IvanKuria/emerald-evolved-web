@@ -115,7 +115,7 @@ export function readBoxMon(raw: Uint8Array, where: string): FoundMon | null {
     for (let i = 0; i < n; i++, pos++) if ((v >>> i) & 1) packed[pos >> 5] = (packed[pos >> 5] | (1 << (pos & 31))) >>> 0
   }
 
-  const gen = readField(subs, L.SUB[L.GENERATION.lo]) | (readField(subs, L.SUB[L.GENERATION.hi]) << 8)
+  const gen = readField(subs, L.SUB[L.GENERATION.field])
   return {
     where,
     species: readField(subs, L.SUB.species),
