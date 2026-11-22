@@ -9,6 +9,7 @@ import { DialogueBox } from '../components/DialogueBox'
 import { HpBar } from '../components/HpBar'
 import TextType from '../components/TextType'
 import CountUp from '../components/CountUp'
+import { scrollFollow } from '../lib/motion'
 
 /* ------------------------------------------------------------------
    Until they can't.
@@ -113,10 +114,10 @@ export function Split() {
       cv.height = H * k
       const ctx = cv.getContext('2d')!
       const feet = feetOf(sheet)
-      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+      const follow = scrollFollow()
       const frame = (now: number) => {
         // the stage follows the scroll on the page's ease, so a flick reads as a walk, not a jump
-        shown += (target.current - shown) * (reduce ? 1 : 0.09)
+        shown += (target.current - shown) * follow
         const p = shown
         const isSplit = p >= SPLIT_AT
         if (isSplit && !wasSplit) hopAt = now

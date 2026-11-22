@@ -6,6 +6,7 @@ import type { Look } from '../lib/follower'
 import { cssPx, deviceScale, useDpr } from '../lib/pixels'
 import { HUE_STEP } from '../save/layout'
 import { Rise } from '../components/Rise'
+import { ambientRate, largeMotion } from '../lib/motion'
 
 /* ------------------------------------------------------------------
    Every egg can mutate.
@@ -69,13 +70,11 @@ export function EggSection() {
   const timer = useRef(0)
   const raf = useRef(0)
   const eggIn = useRef(0)
-  const reduce = useRef(false)
   const hatchRef = useRef<() => void>(() => {})
   const [busy, setBusy] = useState(false)
   const [press, setPress] = useState(false)
 
   useEffect(() => {
-    reduce.current = matchMedia('(prefers-reduced-motion: reduce)').matches
     const fit = () => {
       const wide = document.documentElement.clientWidth
       const kk = wide < 700 ? 3 : wide < 1100 ? 4 : 5
@@ -134,8 +133,9 @@ export function EggSection() {
 
   const schedule = useCallback(() => {
     clearTimeout(timer.current)
-    if (!live.current || reduce.current) return
-    timer.current = window.setTimeout(() => hatchRef.current(), BETWEEN)
+    if (!live.current) return
+    // reduced motion spaces the hatches out a little; it never stops them
+    timer.current = window.setTimeout(() => hatchRef.current(), BETWEEN / ambientRate())
   }, [])
 
   const settle = useCallback(() => {
@@ -153,10 +153,6 @@ export function EggSection() {
     if (!art || run.current) return
     const mon = mutant(next.current++)
     clearTimeout(timer.current)
-    if (reduce.current) {
-      setShelf((sh) => [...sh, mon].slice(-max))
-      return
-    }
     run.current = { start: performance.now(), mon }
     setBusy(true)
     const end = START + (HATCH_REVEAL - START) + FRONT_FRAMES + HOLD
@@ -270,7 +266,12 @@ function ShelfMon({ mon, from, stageK, scale }: { mon: Hatchling; from: React.Re
   useLayoutEffect(() => {
     const el = box.current
     const st = from.current
-    if (!el || !st || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (!el || !st) return
+    // reduced motion: no flight across the page, the hatchling fades in where it lands
+    if (largeMotion() === 'fade') {
+      const c = animate(el, { opacity: [0, 1] }, { duration: 0.3 })
+      return () => c.stop()
+    }
     const a = el.getBoundingClientRect()
     const b = st.getBoundingClientRect()
     const dx = b.left + b.width / 2 - (a.left + a.width / 2)
@@ -295,7 +296,6 @@ function ShelfMon({ mon, from, stageK, scale }: { mon: Hatchling; from: React.Re
       drawFront(ctx, front, mon, 32, 32, f)
     }
     draw(null)
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const play = () => {
       const t0 = performance.now()
       const step = (now: number) => {

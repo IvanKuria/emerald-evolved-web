@@ -5,6 +5,7 @@ import { deviceScale, useDpr } from '../lib/pixels'
 import { HUE_STEP } from '../save/layout'
 import { displayScale } from '../save/genome'
 import './hero.css'
+import { ambientRate, useReducedMotion } from '../lib/motion'
 
 /* ------------------------------------------------------------------
    The arcs.
@@ -150,7 +151,7 @@ export function Arc({ invert = false }: { invert?: boolean }) {
   const [width, setWidth] = useState(0)
   const [height, setHeight] = useState(900)
   const dpr = useDpr()
-  const [reduce, setReduce] = useState(false)
+  const reduce = useReducedMotion()
 
   useEffect(() => {
     const el = wrapRef.current
@@ -163,14 +164,7 @@ export function Arc({ invert = false }: { invert?: boolean }) {
     ro.observe(el)
     setWidth(el.clientWidth)
     setHeight(innerHeight)
-    const mq = matchMedia('(prefers-reduced-motion: reduce)')
-    setReduce(mq.matches)
-    const on = () => setReduce(mq.matches)
-    mq.addEventListener('change', on)
-    return () => {
-      ro.disconnect()
-      mq.removeEventListener('change', on)
-    }
+    return () => ro.disconnect()
   }, [])
 
   const g = belt(width, height)
@@ -194,7 +188,7 @@ export function Arc({ invert = false }: { invert?: boolean }) {
           count={g.count}
           /* a steady stroll at this size; the two curves run opposite ways, so the pair reads as one
              turning mechanism, and the evolved line runs left to right, the way the page reads */
-          speed={reduce ? 0 : STROLL * g.kCss}
+          speed={STROLL * g.kCss * ambientRate(reduce)}
           direction={invert ? 1 : -1}
           slowOnHover={0.22}
           anchor={anchor}

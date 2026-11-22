@@ -111,9 +111,8 @@ export function PathBelt({
   }, [path])
 
   useEffect(() => {
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
     let s = 0
-    let v = reduce ? 0 : direction * speed
+    let v = direction * speed
     let walked = 0
     let facing: 1 | -1 = direction
     let against = 0
@@ -149,7 +148,7 @@ export function PathBelt({
         if (ds === 0) st.dragV *= Math.exp(-dt / 0.08)
         v = st.dragV
       } else {
-        const target = reduce ? 0 : direction * speed * (st.hovered > 0 ? slowOnHover : 1)
+        const target = direction * speed * (st.hovered > 0 ? slowOnHover : 1)
         v += (target - v) * (1 - Math.exp(-SMOOTH * dt))
         ds = v * dt
       }

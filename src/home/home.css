@@ -62,6 +62,100 @@
   will-change: transform;
 }
 
+/* ---- cross-breeding (v1.1.0) ---- */
+
+.xb {
+  max-width: var(--page);
+  margin: 0 auto;
+  padding: 120px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.xb__eyebrow {
+  margin: 0 0 14px;
+  font-size: var(--t-meta);
+  font-weight: 650;
+  color: var(--sprout-ink);
+}
+.xb__row {
+  margin-top: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 28px 44px;
+}
+.xb__mon {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.xb__sprite {
+  position: relative;
+  display: block;
+  filter: drop-shadow(5px 8px 6px rgba(40, 30, 20, 0.22));
+}
+.xb__sprite img {
+  position: absolute;
+  inset: 0;
+}
+.xb__types {
+  margin-top: 6px;
+  display: inline-flex;
+  gap: 4px;
+}
+.xb__name {
+  margin: 14px 0 0;
+  font-size: var(--t-lead);
+  font-weight: 650;
+  color: var(--ink);
+}
+.xb__note {
+  margin: 4px 0 0;
+  font-size: var(--t-body);
+  line-height: 1.5;
+  color: var(--ash);
+}
+.xb__copy {
+  margin-top: 48px;
+  max-width: 34rem;
+  text-align: center;
+  font-size: var(--t-lead);
+  color: var(--ink-soft);
+}
+.xb__copy p {
+  margin: 0 0 10px;
+}
+.xb__birch {
+  margin-top: 44px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.xb__birch-head {
+  margin: 0;
+  font-size: var(--t-sub);
+  font-weight: 650;
+  color: var(--ink);
+}
+/* the message box's height before Birch starts talking, so nothing below jumps */
+.xb__birch-space {
+  height: 126px;
+}
+@media (max-width: 699px) {
+  .xb__row {
+    gap: 24px;
+  }
+  .xb__mon {
+    width: 150px;
+  }
+}
+
 /* ---- you choose who breeds ---- */
 
 .breed {
@@ -209,15 +303,15 @@
   50% { background-position: 0 calc(var(--hand) * -1); }
 }
 
+/* Reduced motion reduces, it never removes (see src/lib/motion.ts): ambient motion keeps running,
+   and only large travel is shortened or becomes a fade. */
 @media (prefers-reduced-motion: reduce) {
-  .breed__tree,
-  .breed__row,
-  .breed__kid,
-  .breed__lines path {
-    transition: none;
+  /* the tree's scroll-linked travel is shortened; rows and lines still fade and draw */
+  .breed__tree {
+    transition-duration: 240ms;
   }
-  .breed__hand[data-frame='-1'] {
-    animation: none;
+  .breed__kid {
+    translate: none;
   }
 }
 
@@ -275,7 +369,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .split__count[data-split='true'] {
-    animation: none;
+    animation: fade-in 400ms var(--ease-out) both;
   }
 }
 
@@ -379,11 +473,6 @@
   filter: drop-shadow(6px 9px 7px rgba(40, 30, 20, 0.26));
   /* the party icon bobs between its two frames, about every ten game frames */
   animation: egg-bob 330ms steps(1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .names__egg {
-    animation: none;
-  }
 }
 
 /* ---- the close ---- */

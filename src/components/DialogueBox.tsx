@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { drawText, loadFont, wrap, type GameFont } from '../lib/gamefont'
 import { cssPx, deviceScale, useDpr } from '../lib/pixels'
+import { ambientRate } from '../lib/motion'
 
 /* ------------------------------------------------------------------
    Emerald's message box, speaking our sentences.
@@ -115,7 +116,7 @@ export function DialogueBox({
   useEffect(() => {
     let raf = 0
     let alive = true
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+    const cps = CPS * ambientRate()
     load().then(({ box, arrow, font }) => {
       const cv = ref.current
       if (!alive || !cv) return
@@ -145,7 +146,7 @@ export function DialogueBox({
         const cur = pages[page]
         const total = len(cur)
         const shown =
-          given !== undefined ? Math.max(0, given - pages.slice(0, page).reduce((a, p) => a + len(p), 0)) : !typing || reduce ? total : Math.floor(((t - start) / 1000) * CPS)
+          given !== undefined ? Math.max(0, given - pages.slice(0, page).reduce((a, p) => a + len(p), 0)) : !typing ? total : Math.floor(((t - start) / 1000) * cps)
         ctx.clearRect(0, 0, W, BOX_H)
         drawFrame(ctx, box, W)
         let left = shown

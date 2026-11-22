@@ -225,7 +225,7 @@ function Pick({
       drawFront(ctx, front, look, 32, 32, f)
     }
     draw(null)
-    if (!kept || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (!kept) return
     const t0 = performance.now()
     const step = (now: number) => {
       const f = ((now - t0) / 1000) * GBA_HZ

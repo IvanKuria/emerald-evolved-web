@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { Hero } from '../home/Hero'
+import { CrossBreed } from '../home/CrossBreed'
 import { EggSection } from '../home/EggSection'
 import { Pedigree } from '../home/Pedigree'
 import { Split } from '../home/Split'
@@ -13,9 +14,10 @@ import '../home/home.css'
 
    The one page that is not a document, built the way frame-site's is:
    every beat is something happening on screen, and the copy is
-   captions. Seven beats:
+   captions. Eight beats:
 
      the arcs       a wild herd and an evolving line, walking
+     cross-breeding three real hybrids, and Birch's Day Care start
      the egg        a real hatch, a mutant, a growing shelf
      the pedigree   you scroll the generations and pick who breeds
      the split      two banks drift apart until the Day Care refuses
@@ -31,6 +33,7 @@ export function Home() {
   return (
     <>
       <Hero />
+      <CrossBreed />
       <EggSection />
       <Pedigree />
       <Split />

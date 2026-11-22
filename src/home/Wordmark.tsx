@@ -119,7 +119,6 @@ export function Wordmark({ eggScale = 3 }: { eggScale?: number }) {
   }, [paint])
 
   const start = () => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
     if (run.current) return void (run.current.hover = true)
     run.current = { start: performance.now(), hover: true, done: 0 }
     cancelAnimationFrame(raf.current)

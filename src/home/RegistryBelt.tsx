@@ -5,6 +5,7 @@ import { SpeciesCard, type CardData } from '../components/SpeciesCard'
 import { Rise } from '../components/Rise'
 import { fetchListing, type Listing } from '../registry/client'
 import { cssPx, deviceScale, useBoxWidth, useDpr } from '../lib/pixels'
+import { ambientRate, useReducedMotion } from '../lib/motion'
 
 /* ------------------------------------------------------------------
    Name yours.
@@ -30,7 +31,7 @@ export function RegistryBelt() {
   }, [])
 
   const cards = listing && listing !== 'loading' ? listing.cards : []
-  const reduce = typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  const reduce = useReducedMotion()
 
   return (
     <section id="names" className="names" aria-labelledby="names-head">
@@ -76,7 +77,7 @@ function Belt({ cards, reduce }: { cards: CardData[]; reduce: boolean }) {
   const count = Math.max(cards.length, Math.floor(L / (CARD + GAP)))
   return (
     <div ref={ref} className="names__belt">
-      <PathBelt path={`M ${-CARD - GAP} 0 L ${w} 0`} count={count} speed={reduce ? 0 : 26} direction={-1} slowOnHover={0.2} anchor={[0, -18]} className="names__track">
+      <PathBelt path={`M ${-CARD - GAP} 0 L ${w} 0`} count={count} speed={26 * ambientRate(reduce)} direction={-1} slowOnHover={0.2} anchor={[0, -18]} className="names__track">
         {(i) => (
           <div className="names__card">
             <SpeciesCard card={cards[i % cards.length]} />

@@ -38,7 +38,7 @@ export function Hero() {
         <h1 id="hero-title" className="m-0">
           <Wordmark eggScale={egg} />
         </h1>
-        <p className="hero__line">Pokémon that actually evolve.</p>
+        <p className="hero__line">Pokémon that actually evolve, and cross-breed.</p>
         <div className="hero__actions">
           <Link to="/play" className="btn btn-ink">
             Play

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { cssPx, deviceScale, useDpr } from '../lib/pixels'
+import { ambientRate } from '../lib/motion'
 
 /* A bar drawn the way Emerald draws HP: a row of 8x8 tiles, each showing
    0 to 8 lit pixels (hpbar_<colour>_0..8 from the game's interface
@@ -31,15 +32,11 @@ export function HpBar({
   const shown = useRef(target)
 
   useEffect(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      shown.current = target
-      return setLit(target)
-    }
     const id = setInterval(() => {
       if (shown.current === target) return clearInterval(id)
       shown.current += shown.current < target ? 1 : -1
       setLit(shown.current)
-    }, 16)
+    }, 16 / ambientRate())
     return () => clearInterval(id)
   }, [target])
 

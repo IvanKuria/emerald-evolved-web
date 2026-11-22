@@ -5,6 +5,7 @@ import { messageBoxCanvas } from '../components/DialogueBox'
 import { GameMenu } from '../components/GameMenu'
 import { handRom } from '../lib/rom'
 import { cssPx, fitScale, useDpr } from '../lib/pixels'
+import { ambientRate } from '../lib/motion'
 
 /* ------------------------------------------------------------------
    Play it in your browser.
@@ -122,7 +123,7 @@ function Placeholder({ k, text }: { k: number; text: string }) {
     let n = 0
     let alive = true
     let timer = 0
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+    const rate = ambientRate()
     const chars = [...text]
     const draw = async () => {
       const box = await messageBoxCanvas(chars.slice(0, n).join(''), 240)
@@ -131,8 +132,8 @@ function Placeholder({ k, text }: { k: number; text: string }) {
       ctx.fillRect(0, 0, cv.width, cv.height)
       ctx.drawImage(box, 0, 0, 240, 42, 0, (160 - 44) * k, 240 * k, 42 * k)
       if (n < chars.length) {
-        n = reduce ? chars.length : n + 1
-        timer = window.setTimeout(draw, 1000 / 34)
+        n = n + 1
+        timer = window.setTimeout(draw, 1000 / (34 * rate))
       }
     }
     draw()

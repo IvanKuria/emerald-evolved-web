@@ -138,10 +138,14 @@
   to { opacity: 1; translate: 0 0; }
 }
 
+/* Reduced motion reduces, it never removes (see src/lib/motion.ts): ambient motion keeps running,
+   and only large travel is shortened or becomes a fade. */
 @media (prefers-reduced-motion: reduce) {
-  .hero__lens,
+  .hero__lens {
+    animation-name: fade-in;
+  }
   .arc__walker {
-    animation: none;
+    animation-name: fade-in;
   }
 }
 
